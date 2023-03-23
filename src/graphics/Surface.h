@@ -4,7 +4,6 @@
 
 #include "../common/basics.h"
 
-#include <SDL.h>
 #include <string>
 #include "types.h"
 
@@ -24,12 +23,16 @@ public:
 
   int width();
   int height();
+#ifndef NO_SDL
   SDL_Texture* texture();
+#endif
 
 private:
   void cleanup();
 
+#ifndef NO_SDL
   SDL_Texture *_texture;
+#endif
   int _width;
   int _height;
 

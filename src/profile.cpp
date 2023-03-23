@@ -6,7 +6,6 @@
 #include "nx.h"
 #include "tsc.h"
 
-#include <SDL.h>
 #include <cstdlib>
 #include <sstream>
 #include <string>
@@ -265,7 +264,7 @@ char *GetProfileName(int num)
     out << (num + 1);
     profile = std::string(prof + "profile" + out.str() + ".dat");
   }
-  char *ret = (char *)SDL_malloc(profile.length() + 1);
+  char *ret = (char *)malloc(profile.length() + 1);
   memcpy(ret, profile.c_str(), profile.length() + 1);
   return ret;
 }
@@ -275,7 +274,7 @@ bool ProfileExists(int num)
 {
   char *profile_name = GetProfileName(num);
   bool ret           = file_exists(profile_name);
-  SDL_free(profile_name);
+  free(profile_name);
   return ret;
 }
 

@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctype.h>
-#include <SDL.h>
 #if defined(_WIN32)
 #include <windows.h>
 #endif

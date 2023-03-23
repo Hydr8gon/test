@@ -48,7 +48,7 @@ bool ResourceManager::fileExists(const std::string &filename)
   {
     return false;
   }
-#else
+#elif not defined(NO_SDL)
 #error Platform not supported
 #endif
   return false;
@@ -58,12 +58,14 @@ std::string ResourceManager::getBasePath()
 {
   #if defined(__SWITCH__)
     return std::string("romfs:/");
+  #elif defined(NO_SDL)
+    return std::string("");
   #else
     char* resPath = SDL_GetBasePath();
     if (NULL != resPath)
     {
         std::string strpath(resPath);
-        SDL_free(resPath);
+        free(resPath);
         return strpath;
     }
     return std::string("");
@@ -74,12 +76,14 @@ std::string ResourceManager::getUserPrefPath()
 {
 #if defined(__SWITCH__)
   return std::string("/switch/nxengine/");
+#elif defined(NO_SDL)
+  return std::string("");
 #else
   char *path = SDL_GetPrefPath(NULL, "nxengine");
   if (NULL != path)
   {
     std::string strpath(path);
-    SDL_free(path);
+    free(path);
     return strpath;
   }
 

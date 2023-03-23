@@ -5,6 +5,8 @@
 #include "../../game.h"
 #include "weapons.h"
 
+#include <cmath>
+
 INITFUNC(AIRoutines)
 {
   ONTICK(OBJ_NEMESIS_SHOT, ai_nemesis_shot);

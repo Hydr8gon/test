@@ -49,6 +49,21 @@ bool Glob::Next()
   return ok_;
 }
 
+#elif defined(NO_SDL)
+
+Glob::Glob(const std::string &pattern)
+{
+}
+
+Glob::~Glob()
+{
+}
+
+bool Glob::Next()
+{
+  return false;
+}
+
 #else
 
 Glob::Glob(const std::string &pattern)

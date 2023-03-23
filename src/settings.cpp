@@ -6,7 +6,6 @@
 #include "Utils/Logger.h"
 #include "input.h"
 
-#include <SDL.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>

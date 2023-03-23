@@ -23,7 +23,6 @@ using namespace NXE::Graphics;
 #include <cstdarg>
 #include <string>
 #include <vector>
-#include <SDL.h>
 
 #include "sound/SoundManager.h"
 #include "player.h"
@@ -717,6 +716,7 @@ bool DebugConsole::HandleKey(int key)
     }
     break;
 
+#ifndef NO_SDL
     // command backbuffer
     case SDLK_UP:
     case SDLK_DOWN:
@@ -733,6 +733,7 @@ bool DebugConsole::HandleKey(int key)
       }
     }
     break;
+#endif
 
     default:
     {

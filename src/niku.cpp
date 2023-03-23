@@ -5,7 +5,6 @@
 #include "Utils/Logger.h"
 #include "ResourceManager.h"
 
-#include <SDL.h>
 #include <cstdio>
 #include <string>
 

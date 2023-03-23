@@ -8,8 +8,6 @@
 #include "Tileset.h"
 #include "Sprites.h"
 
-#include <SDL.h>
-
 
 namespace NXE
 {
@@ -90,8 +88,10 @@ class Renderer
     void setClip(NXRect *rect);
     void clearClip();
     bool isClipSet();
+#ifndef NO_SDL
     void clip(SDL_Rect &srcrect, SDL_Rect &dstrect);
     void clipScaled(SDL_Rect &srcrect, SDL_Rect &dstrect);
+#endif
 
     void saveScreenshot();
 
@@ -99,19 +99,23 @@ class Renderer
 
     void tintScreen();
     void flip();
+#ifndef NO_SDL
     SDL_Renderer* renderer();
     SDL_Window* window();
+#endif
     Font font;
     Tileset tileset;
     Sprites sprites;
 
   private:
+#ifndef NO_SDL
     SDL_Window *_window = nullptr;
     SDL_Renderer *_renderer = nullptr;
-    int _current_res = -1;
-    bool _need_clip = false;
     SDL_Rect _clip_rect;
     SDL_Texture* _spot_light;
+#endif
+    int _current_res = -1;
+    bool _need_clip = false;
 
   protected:
     friend class Singleton<Renderer>;

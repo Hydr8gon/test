@@ -8,7 +8,7 @@
 #include "misc.h"
 
 #include <windows.h>
-#else
+#elif not defined(NO_SDL)
 #include <dirent.h>
 #endif
 
@@ -42,6 +42,16 @@ private:
   bool ok_;
   HANDLE find_handle_;
   WIN32_FIND_DATA find_data_;
+#elif defined(NO_SDL)
+  std::string GetFileName() const
+  {
+    return "";
+  }
+
+  operator bool() const
+  {
+    return 0;
+  }
 #else
   std::string GetFileName() const
   {

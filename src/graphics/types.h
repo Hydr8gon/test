@@ -2,7 +2,9 @@
 #define _G_TYPES_H
 
 #include <cstdint>
+#ifndef NO_SDL
 #include <SDL.h>
+#endif
 
 struct NXColor
 {
@@ -40,6 +42,17 @@ struct NXColor
   }
 };
 
-typedef SDL_Rect NXRect;
+struct NXRect
+{
+  int x, y, w, h;
+
+  NXRect()
+      : x(0)
+      , y(0)
+      , w(0)
+      , h(0)
+  {
+  }
+};
 
 #endif

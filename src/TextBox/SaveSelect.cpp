@@ -95,7 +95,7 @@ void TB_SaveSelect::SetVisible(bool enable, bool saving)
     char *profile_name = GetProfileName(i);
     if (!profile_load(profile_name, &fProfiles[i]))
       fHaveProfile[i] = true;
-    SDL_free(profile_name);
+    free(profile_name);
   }
 
   textbox.ClearText();

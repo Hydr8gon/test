@@ -20,7 +20,6 @@
 #include <stdarg.h>
 #include <string>
 #include <vector>
-#include <SDL.h>
 
 using namespace NXE::Graphics;
 
@@ -252,7 +251,7 @@ int ObjectNameToType(const char *name_in)
       break;
   }
 
-  char *name = SDL_strdup(name_in); // make string writeable
+  char *name = strdup(name_in); // make string writeable
 
   // some string preprocessing
   for (int i = 0; name[i]; i++)

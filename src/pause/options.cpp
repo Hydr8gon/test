@@ -572,6 +572,7 @@ static void _upd_control(ODItem *item)
 
   in_action action = input_get_mapping(item->id);
 
+#ifndef NO_SDL
   if (action.key != -1)
   {
     int keysym = action.key;
@@ -599,6 +600,7 @@ static void _upd_control(ODItem *item)
     else if (action.jhat_value & SDL_HAT_DOWN)
       snprintf(keyname, 64, "JHat %d D", action.jhat);
   }
+#endif
 
   maxcpy(item->righttext, _(keyname).c_str(), sizeof(item->righttext) - 1);
 }
