@@ -1,3 +1,4 @@
+#include "../assets.h"
 #include "Surface.h"
 #include "Renderer.h"
 #include "../Utils/Logger.h"
@@ -25,12 +26,16 @@ bool Surface::loadImage(const std::string &pbm_name, bool use_colorkey)
 {
   cleanup();
 
-  SDL_Surface *image = SDL_LoadBMP(pbm_name.c_str());
-  if (!image)
+  AFile *fp = aopen(pbm_name.c_str());
+  if (!fp)
   {
     LOG_ERROR("Surface::LoadImage: load failed of '{}'! {}", pbm_name, SDL_GetError());
     return false;
   }
+
+  SDL_RWops *io = SDL_RWFromMem(fp->data, fp->size);
+  SDL_Surface *image = SDL_LoadBMP_RW(io, 1);
+  aclose(fp);
 
   _width = image->w * Renderer::getInstance()->scale;
   _height = image->h * Renderer::getInstance()->scale;

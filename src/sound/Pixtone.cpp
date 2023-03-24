@@ -5,6 +5,7 @@
 
 #include "Pixtone.h"
 
+#include "../assets.h"
 #include "../ResourceManager.h"
 #include "../common/misc.h"
 #include "../Utils/Logger.h"
@@ -50,31 +51,31 @@ double fgetv(FILE *fp) // Load a numeric value from text file; one per line.
 
 bool stPXSound::load(const std::string &fname)
 {
-  FILE *fp;
+  AFile *fp;
 
-  fp = myfopen(widen(fname).c_str(), widen("rb").c_str());
+  fp = aopen(widen(fname).c_str());
   if (!fp)
   {
     LOG_WARN("pxt->load: file '{}' not found.", fname);
     return false;
   }
 
-  auto f  = [=]() { return (int32_t)fgetv(fp); };
-  auto fu = [=]() { return (uint32_t)fgetv(fp); };
+  auto f  = [=]() { return (int32_t)agetv(fp); };
+  auto fu = [=]() { return (uint32_t)agetv(fp); };
 
   for (auto &c : channels)
   {
     c = {
         f() != 0,
         fu(),                                       // enabled, length
-        {wave[f() % 6].table, fgetv(fp), f(), f()}, // carrier wave
-        {wave[f() % 6].table, fgetv(fp), f(), f()}, // frequency wave
-        {wave[f() % 6].table, fgetv(fp), f(), f()}, // amplitude wave
+        {wave[f() % 6].table, agetv(fp), f(), f()}, // carrier wave
+        {wave[f() % 6].table, agetv(fp), f(), f()}, // frequency wave
+        {wave[f() % 6].table, agetv(fp), f(), f()}, // amplitude wave
         {f(), {{f(), f()}, {f(), f()}, {f(), f()}}}, // envelope
         nullptr
     };
   }
-  fclose(fp);
+  aclose(fp);
   return true;
 }
 

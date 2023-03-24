@@ -1,5 +1,6 @@
 #include "translate.h"
 
+#include "../assets.h"
 #include "../ResourceManager.h"
 #include "../common/misc.h"
 #include "../Utils/Logger.h"
@@ -19,12 +20,13 @@ I18N::~I18N() {}
 bool I18N::load()
 {
   std::string path = ResourceManager::getInstance()->getPath("system.json");
-  std::ifstream fl;
+  AFile *fp;
   _strings.clear();
-  fl.open(widen(path), std::ifstream::in | std::ifstream::binary);
-  if (fl.is_open())
+  fp = aopen(widen(path).c_str());
+  if (fp)
   {
-    nlohmann::json langfile = nlohmann::json::parse(fl);
+    nlohmann::json langfile = nlohmann::json::parse(fp->data, &fp->data[fp->size]);
+    aclose(fp);
 
     _rtl = langfile.value("rtl", false);
 

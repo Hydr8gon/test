@@ -1,6 +1,7 @@
 
 #include "map.h"
 
+#include "assets.h"
 #include "ObjManager.h"
 #include "ai/sym/smoke.h"
 #include "autogen/sprites.h"
@@ -92,17 +93,17 @@ void c------------------------------() {}
 // load a PXM map
 bool load_map(const std::string &fname)
 {
-  FILE *fp;
+  AFile *fp;
   int x, y;
 
-  fp = myfopen(widen(fname).c_str(), widen("rb").c_str());
+  fp = aopen(widen(fname).c_str());
   if (!fp)
   {
     LOG_ERROR("load_map: no such file: '{}'", fname);
     return 1;
   }
 
-  if (!fverifystring(fp, "PXM"))
+  if (!averifystring(fp, "PXM"))
   {
     LOG_ERROR("load_map: invalid map format: '{}'", fname);
     return 1;
@@ -110,15 +111,15 @@ bool load_map(const std::string &fname)
 
   memset(&map, 0, sizeof(map));
 
-  fgetc(fp);
-  map.xsize = fgeti(fp);
-  map.ysize = fgeti(fp);
+  agetc(fp);
+  map.xsize = ageti(fp);
+  map.ysize = ageti(fp);
 
   if (map.xsize > MAP_MAXSIZEX || map.ysize > MAP_MAXSIZEY)
   {
     LOG_ERROR("load_map: map is too large -- size {}x{} but max is {}x{}", map.xsize, map.ysize, MAP_MAXSIZEX,
             MAP_MAXSIZEY);
-    fclose(fp);
+    aclose(fp);
     return 1;
   }
   else
@@ -129,14 +130,14 @@ bool load_map(const std::string &fname)
   for (y = 0; y < map.ysize; y++)
     for (x = 0; x < map.xsize; x++)
     {
-      map.tiles[x][y] = fgetc(fp);
+      map.tiles[x][y] = agetc(fp);
       if (game.curmap == 31 && (y == 0 || y == 15))
       {
         map.tiles[x][y] = 0xF; // block up/down in Main Artery
       }
     }
 
-  fclose(fp);
+  aclose(fp);
 
   if (Renderer::getInstance()->widescreen)
   {
@@ -222,7 +223,7 @@ void recalc_map_offsets()
 // load a PXE (entity list for a map)
 bool load_entities(const std::string &fname)
 {
-  FILE *fp;
+  AFile *fp;
   int i;
   int nEntities;
 
@@ -232,30 +233,30 @@ bool load_entities(const std::string &fname)
 
   LOG_DEBUG("load_entities: reading in {}", fname);
   // now we can load in the new objects
-  fp = myfopen(widen(fname).c_str(), widen("rb").c_str());
+  fp = aopen(widen(fname).c_str());
   if (!fp)
   {
     LOG_ERROR("load_entities: no such file: '{}'", fname);
     return 1;
   }
 
-  if (!fverifystring(fp, "PXE"))
+  if (!averifystring(fp, "PXE"))
   {
     LOG_ERROR("load_entities: not a PXE: '{}'", fname);
     return 1;
   }
 
-  fgetc(fp);
-  nEntities = fgetl(fp);
+  agetc(fp);
+  nEntities = agetl(fp);
 
   for (i = 0; i < nEntities; i++)
   {
-    int x     = fgeti(fp);
-    int y     = fgeti(fp);
-    int id1   = fgeti(fp);
-    int id2   = fgeti(fp);
-    int type  = fgeti(fp);
-    int flags = fgeti(fp);
+    int x     = ageti(fp);
+    int y     = ageti(fp);
+    int id1   = ageti(fp);
+    int id2   = ageti(fp);
+    int type  = ageti(fp);
+    int flags = ageti(fp);
 
     int dir = (flags & FLAG_FACES_RIGHT) ? RIGHT : LEFT;
 
@@ -387,7 +388,7 @@ bool load_entities(const std::string &fname)
   }
 
   LOG_DEBUG("load_entities: loaded {} objects", nEntities);
-  fclose(fp);
+  aclose(fp);
   return 0;
 }
 
@@ -409,12 +410,12 @@ bool load_entities(const std::string &fname)
 // loads a pxa (tileattr) file
 bool load_tileattr(const std::string &fname)
 {
-  FILE *fp;
+  AFile *fp;
   int i;
   unsigned char tc;
 
   LOG_DEBUG("load_pxa: reading in {}", fname);
-  fp = myfopen(widen(fname).c_str(), widen("rb").c_str());
+  fp = aopen(widen(fname).c_str());
   if (!fp)
   {
     LOG_ERROR("load_pxa: no such file: '{}'", fname);
@@ -423,7 +424,7 @@ bool load_tileattr(const std::string &fname)
 
   for (i = 0; i < 256; i++)
   {
-    tc          = fgetc(fp);
+    tc          = agetc(fp);
     tilecode[i] = tc;
     tileattr[i] = tilekey[tc];
     LOG_TRACE("Tile {:#02x}   TC {:#02x}    Attr {:#08x}   tilekey[{:#02x}] = {:#08x}", i, tc, tileattr[i], tc, tilekey[tc]);
@@ -432,22 +433,23 @@ bool load_tileattr(const std::string &fname)
       tileattr[i] = 0; // remove left/right blockers in Mai Artery
   }
 
-  fclose(fp);
+  aclose(fp);
   return 0;
 }
 
 void load_meta(const std::string &fname)
 {
-  std::ifstream fl;
+  AFile *fp;
 
   oob_tile_count = 0;
 
-  fl.open(widen(fname), std::ifstream::in | std::ifstream::binary);
-  if (fl.is_open())
+  fp = aopen(widen(fname).c_str());
+  if (fp)
   {
     try
     {
-      nlohmann::json metadata_root = nlohmann::json::parse(fl);
+      nlohmann::json metadata_root = nlohmann::json::parse(fp->data, &fp->data[fp->size]);
+      aclose(fp);
 
       // Load out-of-bounds details.
       if (metadata_root.find("out-of-bounds") != metadata_root.end())
@@ -490,9 +492,9 @@ void load_meta(const std::string &fname)
 
 bool load_stages(void)
 {
-  FILE *fp;
+  AFile *fp;
 
-  fp = myfopen(widen(ResourceManager::getInstance()->getPath("stage.dat")).c_str(), widen("rb").c_str());
+  fp = aopen(widen(ResourceManager::getInstance()->getPath("stage.dat")).c_str());
   if (!fp)
   {
     LOG_ERROR("failed to open data/stage.dat");
@@ -500,37 +502,37 @@ bool load_stages(void)
     return 1;
   }
 
-  num_stages = fgetc(fp);
+  num_stages = agetc(fp);
   for (int i = 0; i < num_stages; i++)
-    fread(&stages[i], sizeof(MapRecord), 1, fp);
+    aread(&stages[i], sizeof(MapRecord), 1, fp);
 
   // hack to show nice backdrop in menu, like nicalis
   //	stages[0].bg_no=9;
   // hack to not show ballos in e_Blcn
   stages[93].bossNo = 0;
 
-  fclose(fp);
+  aclose(fp);
 
   return 0;
 }
 
 bool initmapfirsttime(void)
 {
-  FILE *fp;
+  AFile *fp;
   int i;
 
   LOG_INFO("Loading tilekey.dat.");
   if (!(fp
-        = myfopen(widen(ResourceManager::getInstance()->getPath("tilekey.dat")).c_str(), widen("rb").c_str())))
+        = aopen(widen(ResourceManager::getInstance()->getPath("tilekey.dat")).c_str())))
   {
     LOG_ERROR("tilekey.dat is missing!");
     return 1;
   }
 
   for (i = 0; i < 256; i++)
-    tilekey[i] = fgetl(fp);
+    tilekey[i] = agetl(fp);
 
-  fclose(fp);
+  aclose(fp);
   return load_stages();
 }
 

@@ -3,6 +3,7 @@
 
 #include "tsc.h"
 
+#include "assets.h"
 #include "ObjManager.h"
 #include "ResourceManager.h"
 #include "ai/sym/smoke.h"
@@ -174,27 +175,27 @@ bool TSC::Load(const std::string &fname, ScriptPages pageno)
 std::string TSC::Decrypt(const std::string &fname, int *fsize_out)
 {
   int fsize, i;
-  std::ifstream ifs;
+  AFile *fp;
   if (fsize_out)
     *fsize_out = 0;
 
-  ifs.open(widen(fname), std::ifstream::binary);
+  fp = aopen(widen(fname).c_str());
 
-  if (!ifs)
+  if (!fp)
   {
     LOG_ERROR("tsc_decrypt: no such file: '{}'!", fname);
     return "";
   }
 
-  ifs.seekg(0, ifs.end);
-  fsize = ifs.tellg();
-  ifs.seekg(0, ifs.beg);
+  aseek(fp, 0, SEEK_END);
+  fsize = atell(fp);
+  aseek(fp, 0, SEEK_SET);
 
   // load file
   uint8_t *buf = new uint8_t[fsize + 1];
-  ifs.read((char *)buf, fsize);
+  aread((char *)buf, 1, fsize, fp);
   buf[fsize] = 0;
-  ifs.close();
+  aclose(fp);
 
   // get decryption key, which is actually part of the text
   int keypos  = (fsize / 2);

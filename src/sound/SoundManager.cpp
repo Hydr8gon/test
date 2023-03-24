@@ -1,5 +1,6 @@
 #include "SoundManager.h"
 
+#include "../assets.h"
 #include "../ResourceManager.h"
 #include "../common/misc.h"
 #include "../Utils/Logger.h"
@@ -63,12 +64,12 @@ bool SoundManager::init()
   _music_dir_names.push_back("Original");
   _music_playlists.push_back("music.json");
 
-  std::ifstream fl;
+  AFile *fp;
 
-  fl.open(widen(path), std::ifstream::in | std::ifstream::binary);
-  if (fl.is_open())
+  fp = aopen(widen(path).c_str());
+  if (fp)
   {
-    nlohmann::json dirlist = nlohmann::json::parse(fl);
+    nlohmann::json dirlist = nlohmann::json::parse(fp->data, &fp->data[fp->size]);
 
     for (auto it = dirlist.begin(); it != dirlist.end(); ++it)
     {
@@ -97,7 +98,7 @@ bool SoundManager::init()
         LOG_WARN("Music dir {} doesn't exist", dir.c_str());
       }
     }
-    fl.close();
+    aclose(fp);
   }
   else
   {
@@ -409,17 +410,17 @@ void SoundManager::_reloadTrackList()
 {
   std::string path = ResourceManager::getInstance()->getPath(_music_playlists.at(settings->new_music), false);
 
-  std::ifstream fl;
+  AFile *fp;
 
   _music_names.clear();
   _music_names.push_back("");
   _music_loop.clear();
   _music_loop.push_back(false);
 
-  fl.open(widen(path), std::ifstream::in | std::ifstream::binary);
-  if (fl.is_open())
+  fp = aopen(widen(path).c_str());
+  if (fp)
   {
-    nlohmann::json tracklist = nlohmann::json::parse(fl);
+    nlohmann::json tracklist = nlohmann::json::parse(fp->data, &fp->data[fp->size]);
 
     for (auto it = tracklist.begin(); it != tracklist.end(); ++it)
     {
@@ -434,7 +435,7 @@ void SoundManager::_reloadTrackList()
       }
       _music_names.push_back(it.value().at("name"));
     }
-    fl.close();
+    aclose(fp);
   }
   else
   {

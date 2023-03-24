@@ -123,17 +123,7 @@ std::string ResourceManager::getPath(const std::string &filename, bool localized
     _paths.push_back(userResBase + "data/" + filename);
   }
 
-  #if defined(DATADIR)
-    std::string _data(DATADIR);
-  #else
-    std::string _data = getBasePath();
-
-    #if defined(HAVE_UNIX_LIKE) and !defined(PORTABLE)
-      _data += "../share/nxengine/data/";
-    #else
-      _data += "data/";
-    #endif
-  #endif
+  std::string _data = "data/";
 
   if (!_mod.empty())
   {
@@ -165,6 +155,9 @@ std::string ResourceManager::getPathForDir(const std::string &dir)
 
 inline std::vector<std::string> glob(const std::string &pat)
 {
+#ifdef NO_SDL
+  return std::vector<std::string>();
+#else
   Glob search(pat);
   std::vector<std::string> ret;
   while (search)
@@ -173,6 +166,7 @@ inline std::vector<std::string> glob(const std::string &pat)
     search.Next();
   }
   return ret;
+#endif
 }
 
 void ResourceManager::findLanguages()

@@ -19,7 +19,7 @@ SIFLoader::~SIFLoader()
 {
   ClearIndex();
   if (fFP)
-    fclose(fFP);
+    aclose(fFP);
 }
 
 /*
@@ -46,7 +46,7 @@ void SIFLoader::CloseFile()
 
   if (fFP)
   {
-    fclose(fFP);
+    aclose(fFP);
     fFP = NULL;
   }
 }
@@ -57,14 +57,14 @@ void c------------------------------() {}
 
 bool SIFLoader::LoadHeader(const std::string &filename)
 {
-  FILE *fp;
+  AFile *fp;
   uint32_t magick;
 
   ClearIndex();
 
   if (fFP)
-    fclose(fFP);
-  fp = fFP = myfopen(widen(filename).c_str(), widen("rb").c_str());
+    aclose(fFP);
+  fp = fFP = aopen(widen(filename).c_str());
 
   if (!fp)
   {
@@ -72,23 +72,23 @@ bool SIFLoader::LoadHeader(const std::string &filename)
     return 1;
   }
 
-  if ((magick = fgetl(fp)) != SIF_MAGICK)
+  if ((magick = agetl(fp)) != SIF_MAGICK)
   {
     LOG_ERROR("SIFLoader::LoadHeader: magick check failed--this isn't a SIF file or is wrong version?");
     LOG_ERROR(" (expected {:#08x}, got {:#08x})", SIF_MAGICK, magick);
     return 1;
   }
 
-  int nsections = fgetc(fp);
+  int nsections = agetc(fp);
   LOG_DEBUG("SIFLoader::LoadHeader: read index of {} sections", nsections);
 
   for (int i = 0; i < nsections; i++)
   {
     SIFIndexEntry *entry = new SIFIndexEntry;
 
-    entry->type    = fgetc(fp); // section type
-    entry->foffset = fgetl(fp); // absolute offset in file
-    entry->length  = fgetl(fp); // length of section data
+    entry->type    = agetc(fp); // section type
+    entry->foffset = agetl(fp); // absolute offset in file
+    entry->length  = agetl(fp); // length of section data
     entry->data    = NULL;      // we won't load it until asked
 
     fIndex.push_back(entry);
@@ -126,8 +126,8 @@ uint8_t *SIFLoader::FindSection(int type, int *length_out)
         LOG_DEBUG("Loading SIF section {} from address {:#04x}", type, entry->foffset);
 
         entry->data = (uint8_t *)malloc(entry->length);
-        fseek(fFP, entry->foffset, SEEK_SET);
-        fread(entry->data, entry->length, 1, fFP);
+        aseek(fFP, entry->foffset, SEEK_SET);
+        aread(entry->data, entry->length, 1, fFP);
       }
 
       if (length_out)

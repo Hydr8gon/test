@@ -2,6 +2,8 @@
 #ifndef _SIFLOADER_H
 #define _SIFLOADER_H
 
+#include "../assets.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -69,7 +71,7 @@ private:
   void ClearIndex();
 
   std::vector<SIFIndexEntry *> fIndex; // index table from header (list of SIFIndexEntry)
-  FILE *fFP;                           // open file handle
+  AFile *fFP;                          // open file handle
 };
 
 #endif

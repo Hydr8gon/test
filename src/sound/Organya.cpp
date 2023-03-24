@@ -5,6 +5,7 @@
 
 #include "Organya.h"
 
+#include "../assets.h"
 #include "../ResourceManager.h"
 #include "../common/glob.h"
 #include "../common/misc.h"
@@ -59,8 +60,8 @@ void Organya::shutdown() {}
 
 bool Organya::_loadWavetable()
 {
-  FILE *fp
-      = myfopen(widen(ResourceManager::getInstance()->getPath("wavetable.dat", false)).c_str(), widen("rb").c_str());
+  AFile *fp
+      = aopen(widen(ResourceManager::getInstance()->getPath("wavetable.dat", false)).c_str());
   if (!fp)
   {
     LOG_ERROR("Unable to open wavetable.dat");
@@ -68,9 +69,9 @@ bool Organya::_loadWavetable()
   }
 
   for (size_t a = 0; a < 100 * 256; ++a)
-    WaveTable[a] = (signed char)fgetc(fp);
+    WaveTable[a] = (signed char)agetc(fp);
 
-  std::fclose(fp);
+  aclose(fp);
 
   return true;
 }
@@ -116,45 +117,45 @@ void Organya::_setPlayPosition(uint32_t pos)
 
 bool Song::Load(const std::string &fname)
 {
-  FILE *fp = myfopen(widen(fname).c_str(), widen("rb").c_str());
+  AFile *fp = aopen(widen(fname).c_str());
   if (!fp)
   {
     LOG_WARN("Song::Load: no such file: '{}'", fname);
     return false;
   }
   for (int i = 0; i < 6; ++i)
-    fgetc(fp); // Ignore file signature ("Org-02")
+    agetc(fp); // Ignore file signature ("Org-02")
   last_pos    = 0;
   cur_beat    = 0;
   total_beats = 0;
   // Load song parameters
-  ms_per_beat    = fgeti(fp);
-  steps_per_bar  = fgetc(fp);
-  beats_per_step = fgetc(fp);
-  loop_start     = fgetl(fp);
-  loop_end       = fgetl(fp);
+  ms_per_beat    = ageti(fp);
+  steps_per_bar  = agetc(fp);
+  beats_per_step = agetc(fp);
+  loop_start     = agetl(fp);
+  loop_end       = agetl(fp);
   // Load each instrument parameters (and initialize them)
   for (auto &i : ins)
   {
-    i = {fgeti(fp), fgetc(fp), 1, 255, false, fgetc(fp) != 0, fgeti(fp), {}, 0, 0, 0, 0, 0, 0, 0};
+    i = {ageti(fp), agetc(fp), 1, 255, false, agetc(fp) != 0, ageti(fp), {}, 0, 0, 0, 0, 0, 0, 0};
   }
   // Load events for each instrument
   for (auto &i : ins)
   {
     std::vector<std::pair<int, Instrument::Event>> events(i.n_events);
     for (auto &n : events)
-      n.first = fgetl(fp);
+      n.first = agetl(fp);
     for (auto &n : events)
-      n.second.note = fgetc(fp);
+      n.second.note = agetc(fp);
     for (auto &n : events)
-      n.second.length = fgetc(fp);
+      n.second.length = agetc(fp);
     for (auto &n : events)
-      n.second.volume = fgetc(fp);
+      n.second.volume = agetc(fp);
     for (auto &n : events)
-      n.second.panning = fgetc(fp);
+      n.second.panning = agetc(fp);
     i.events.insert(events.begin(), events.end());
   }
-  std::fclose(fp);
+  aclose(fp);
   return true;
 }
 

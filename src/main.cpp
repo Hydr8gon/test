@@ -10,6 +10,7 @@
 #include <io.h>
 #endif
 //#include "main.h"
+#include "assets.h"
 #include "game.h"
 #include "graphics/Renderer.h"
 #include "input.h"
@@ -52,6 +53,8 @@ static uint32_t fpstimer = 0;
 int framecount    = 0;
 bool freezeframe  = false;
 int flipacceltime = 0;
+
+uint8_t *data_bin;
 
 static void fatal(const char *str)
 {
@@ -274,6 +277,14 @@ void InitNewGame(bool with_intro)
   fade.set_full(FADE_OUT);
 }
 
+uint8_t *data_loader(uint32_t offset, uint32_t size)
+{
+  // Simple data loader for an asset file fully loaded in memory
+  uint8_t *data = new uint8_t[size];
+  memcpy(data, &data_bin[offset], size);
+  return data;
+}
+
 int main(int argc, char *argv[])
 {
   bool error            = false;
@@ -315,6 +326,25 @@ int main(int argc, char *argv[])
     LOG_CRITICAL("IMG_Init: Failed to init required png support: {}", IMG_GetError());
     return 1;
   }
+
+  // Load the entire asset file into memory on boot
+  std::string path = ResourceManager::getInstance()->getBasePath() + "data.bin";
+  if (FILE *fp = fopen(path.c_str(), "rb"))
+  {
+    fseek(fp, 0, SEEK_END);
+    uint32_t size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    data_bin = new uint8_t[size];
+    fread(data_bin, sizeof(uint8_t), size, fp);
+    fclose(fp);
+  }
+  else
+  {
+    LOG_CRITICAL("Failed to open data.bin.");
+    return 1;
+  }
+
+  assets_init(data_bin, data_loader);
 
   // start up inputs first thing because settings_load may remap them
   input_init();
@@ -377,7 +407,7 @@ int main(int argc, char *argv[])
   else
     game.setmode(GM_INTRO);
 
-  SDL_free(profile_name);
+  free(profile_name);
 
   // for debug
   if (game.paused)

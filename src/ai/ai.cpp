@@ -1,6 +1,7 @@
 
 #include "ai.h"
 
+#include "../assets.h"
 #include "../ObjManager.h"
 #include "../ResourceManager.h"
 #include "../caret.h"
@@ -49,7 +50,7 @@ bool load_npc_tbl(void)
   const int smoke_amounts[] = {0, 3, 7, 12};
   const int nEntries        = 361;
   int i;
-  FILE *fp = myfopen(widen(ResourceManager::getInstance()->getPath("npc.tbl")).c_str(), widen("rb").c_str());
+  AFile *fp = aopen(widen(ResourceManager::getInstance()->getPath("npc.tbl")).c_str());
   if (!fp)
   {
     LOG_ERROR("load_npc_tbl: data/npc.tbl is missing");
@@ -59,31 +60,31 @@ bool load_npc_tbl(void)
   LOG_INFO("Reading npc.tbl...");
 
   for (i = 0; i < nEntries; i++)
-    objprop[i].defaultflags = fgeti(fp);
+    objprop[i].defaultflags = ageti(fp);
   for (i = 0; i < nEntries; i++)
-    objprop[i].initial_hp = fgeti(fp);
+    objprop[i].initial_hp = ageti(fp);
 
   // next is a spritesheet # of something--but we don't use it, so skip
   // for(i=0;i<nEntries;i++) fgetc(fp);		// spritesheet # or something--but we don't use it
-  fseek(fp, (nEntries * 2 * 2) + nEntries, SEEK_SET);
+  aseek(fp, (nEntries * 2 * 2) + nEntries, SEEK_SET);
 
   for (i = 0; i < nEntries; i++)
-    objprop[i].death_sound = (NXE::Sound::SFX)fgetc(fp);
+    objprop[i].death_sound = (NXE::Sound::SFX)agetc(fp);
   for (i = 0; i < nEntries; i++)
-    objprop[i].hurt_sound = (NXE::Sound::SFX)fgetc(fp);
+    objprop[i].hurt_sound = (NXE::Sound::SFX)agetc(fp);
   for (i = 0; i < nEntries; i++)
-    objprop[i].death_smoke_amt = smoke_amounts[fgetc(fp)];
+    objprop[i].death_smoke_amt = smoke_amounts[agetc(fp)];
   for (i = 0; i < nEntries; i++)
-    objprop[i].xponkill = fgetl(fp);
+    objprop[i].xponkill = agetl(fp);
   for (i = 0; i < nEntries; i++)
-    objprop[i].damage = fgetl(fp);
+    objprop[i].damage = agetl(fp);
 
   /*for(i=0;i<nEntries;i++)
   {
-          int left = fgetc(fp);
-          int top = fgetc(fp);
-          int right = fgetc(fp);
-          int bottom = fgetc(fp);
+          int left = agetc(fp);
+          int top = agetc(fp);
+          int right = agetc(fp);
+          int bottom = agetc(fp);
 
           if (i == 59)
           {
@@ -92,7 +93,7 @@ bool load_npc_tbl(void)
           }
   }*/
 
-  fclose(fp);
+  aclose(fp);
   return 0; // 1;
 }
 

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 // graphics routines
+#include "../assets.h"
 #include "../ResourceManager.h"
 #include "../config.h"
 #include "../game.h"
@@ -135,8 +136,11 @@ bool Renderer::initVideo()
 
   std::string spotpath = ResourceManager::getInstance()->getPath("spot.png");
 
-  SDL_Surface *image;
-  image = IMG_Load(spotpath.c_str());
+
+  AFile *fp = aopen(spotpath.c_str());
+  SDL_RWops *io = SDL_RWFromMem(fp->data, fp->size);
+  SDL_Surface *image = IMG_Load_RW(io, 1);
+  aclose(fp);
   _spot_light = SDL_CreateTextureFromSurface(_renderer, image);
   SDL_FreeSurface(image);
 
