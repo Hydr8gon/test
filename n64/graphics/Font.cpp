@@ -37,6 +37,11 @@ uint32_t Font::draw(int x, int y, const std::string &text, uint32_t color, bool 
     return 0;
 }
 
+uint32_t Font::drawLTR(int x, int y, const std::string &text, uint32_t color, bool isShaded)
+{
+    return 0;
+}
+
 uint32_t Font::getWidth(const std::string &text)
 {
     return 0;

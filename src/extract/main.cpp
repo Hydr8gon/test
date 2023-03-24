@@ -74,26 +74,46 @@ int main(int argc, char *argv[])
 
   list_files("data");
   uint8_t *data = new uint8_t[0x1000000]; // 16MB (should be plenty)
-  size_t offset = (files.size() + 1) << 5;
+  memset(data, 0, 0x1000000);
+  size_t offset = (files.size() + 1) << 6;
 
   // Generate a single file containing all assets
-  // Header has 32-byte file entries: 28 bytes for path and 4 bytes for offset
+  // Header has 64-byte file entries: 56 for path, 4 for offset, 4 for size
   for (size_t i = 0; i < files.size(); i++)
   {
-    strncpy((char*)&data[i << 5], files[i].path.c_str(), 28);
-    *(uint32_t*)&data[(i << 5) + 28] = offset;
+    strncpy((char*)&data[i << 6], files[i].path.c_str(), 56);
+    *(uint32_t*)&data[(i << 6) + 56] = offset;
+    *(uint32_t*)&data[(i << 6) + 60] = files[i].size;
     memcpy(&data[offset], files[i].data, files[i].size);
-    offset += files[i].size;
+    offset = (offset + files[i].size + 3) & ~3; // Word-aligned
   }
 
   // Mark the tail of the list and write to file
   const char *tail = "tail";
-  strncpy((char*)&data[files.size() << 5], tail, 28);
-  *(uint32_t*)&data[(files.size() << 5) + 28] = offset;
+  strncpy((char*)&data[files.size() << 6], tail, 56);
   fp = fopen("data.bin", "wb");
   fwrite(data, sizeof(uint8_t), offset, fp);
   fclose(fp);
-
   printf("Successfully compiled data.bin.\n");
+
+  // Append the file to the N64 ROM with a 2MB offset
+  if (fp = fopen("NXEngine64.z64", "rb"))
+  {
+    memset(data, 0, 0x200000);
+    fread(data, sizeof(uint8_t), 0x200000, fp);
+    fclose(fp);
+    fp = fopen("data.bin", "rb");
+    fread(&data[0x200000], sizeof(uint8_t), 0xE00000, fp);
+    size_t pos = ftell(fp);
+    fclose(fp);
+    fp = fopen("NXEngine64.z64", "wb");
+    fwrite(data, sizeof(uint8_t), 0x200000 + pos, fp);
+    printf("Successfully appended data.bin to NXEngine64.z64.\n");
+  }
+  else
+  {
+    printf("NXEngine64.z64 not found!\n");
+  }
+
   return 0;
 }

@@ -9,7 +9,7 @@
 #include <direct.h>
 #include <io.h>
 #endif
-//#include "main.h"
+#include "main_port.h"
 #include "assets.h"
 #include "game.h"
 #include "graphics/Renderer.h"
@@ -53,15 +53,9 @@ static uint32_t fpstimer = 0;
 int framecount    = 0;
 bool freezeframe  = false;
 int flipacceltime = 0;
+int32_t nexttick = 0;
 
 uint8_t *data_bin;
-
-static void fatal(const char *str)
-{
-  LOG_CRITICAL("fatal: '{}'", str);
-
-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", str, NULL);
-}
 
 /*static bool check_data_exists()
 {
@@ -206,75 +200,39 @@ void AppMinimized(void)
 
 void gameloop(void)
 {
-  int32_t nexttick = 0;
+  // get time until next tick
+  int32_t curtime       = SDL_GetTicks();
+  int32_t timeRemaining = nexttick - curtime;
 
-  game.switchstage.mapno = -1;
-
-  while (game.running && game.switchstage.mapno < 0)
+  if (timeRemaining <= 0 || game.ffwdtime)
   {
-    // get time until next tick
-    int32_t curtime       = SDL_GetTicks();
-    int32_t timeRemaining = nexttick - curtime;
+    run_tick();
 
-    if (timeRemaining <= 0 || game.ffwdtime)
-    {
-      run_tick();
+    // try to "catch up" if something else on the system bogs us down for a moment.
+    // but if we get really far behind, it's ok to start dropping frames
+    if (game.ffwdtime)
+      game.ffwdtime--;
 
-      // try to "catch up" if something else on the system bogs us down for a moment.
-      // but if we get really far behind, it's ok to start dropping frames
-      if (game.ffwdtime)
-        game.ffwdtime--;
-
-      nexttick = curtime + GAME_WAIT;
+    nexttick = curtime + GAME_WAIT;
 
 #if !defined(DEBUG)
-      // pause game if window minimized
-      if (!Renderer::getInstance()->isWindowVisible())
-      {
-        AppMinimized();
-        nexttick = 0;
-      }
-#endif
-    }
-    else
+    // pause game if window minimized
+    if (!Renderer::getInstance()->isWindowVisible())
     {
-      // don't needlessly hog CPU, but don't sleep for entire
-      // time left, some CPU's/kernels will fall asleep for
-      // too long and cause us to run slower than we should
-      timeRemaining /= 2;
-      if (timeRemaining)
-        SDL_Delay(timeRemaining);
+      AppMinimized();
+      nexttick = 0;
     }
+#endif
   }
-}
-
-void InitNewGame(bool with_intro)
-{
-  LOG_DEBUG("= Beginning new game =");
-
-  memset(game.flags, 0, sizeof(game.flags));
-  memset(game.skipflags, 0, sizeof(game.skipflags));
-  textbox.StageSelect.ClearSlots();
-
-  game.quaketime = game.megaquaketime = 0;
-  game.showmapnametime                = 0;
-  game.debug.god                      = 0;
-  game.running                        = true;
-  game.frozen                         = false;
-
-  // fully re-init the player object
-  Objects::DestroyAll(true);
-  game.createplayer();
-
-  player->maxHealth = 3;
-  player->hp        = player->maxHealth;
-
-  game.switchstage.mapno        = STAGE_START_POINT;
-  game.switchstage.playerx      = 10;
-  game.switchstage.playery      = 8;
-  game.switchstage.eventonentry = (with_intro) ? 200 : 91;
-
-  fade.set_full(FADE_OUT);
+  else
+  {
+    // don't needlessly hog CPU, but don't sleep for entire
+    // time left, some CPU's/kernels will fall asleep for
+    // too long and cause us to run slower than we should
+    timeRemaining /= 2;
+    if (timeRemaining)
+      SDL_Delay(timeRemaining);
+  }
 }
 
 uint8_t *data_loader(uint32_t offset, uint32_t size)
@@ -287,9 +245,6 @@ uint8_t *data_loader(uint32_t offset, uint32_t size)
 
 int main(int argc, char *argv[])
 {
-  bool error            = false;
-  bool freshstart;
-
 #if defined(UNIX_LIKE)
   // On platforms where SDL may use Wayland (Linux and BSD), setting the icon from a surface doesn't work and
   // the request will be ignored. Instead apps submit their app ID using the xdg-shell Wayland protocol and
@@ -345,166 +300,5 @@ int main(int argc, char *argv[])
   }
 
   assets_init(data_bin, data_loader);
-
-  // start up inputs first thing because settings_load may remap them
-  input_init();
-
-  // load settings, or at least get the defaults,
-  // so we know the initial screen resolution.
-  settings_load();
-
-  if (!Renderer::getInstance()->init(settings->resolution))
-  {
-    fatal("Failed to initialize graphics.");
-    return 1;
-  }
-  Renderer::getInstance()->setFullscreen(settings->fullscreen);
-
-  //	if (check_data_exists())
-  //	{
-  //		return 1;
-  //	}
-
-  Renderer::getInstance()->showLoadingScreen();
-
-  if (!SoundManager::getInstance()->init())
-  {
-    fatal("Failed to initialize sound.");
-    return 1;
-  }
-
-  if (trig_init())
-  {
-    fatal("Failed trig module init.");
-    return 1;
-  }
-
-  if (textbox.Init())
-  {
-    fatal("Failed to initialize textboxes.");
-    return 1;
-  }
-  if (Carets::init())
-  {
-    fatal("Failed to initialize carets.");
-    return 1;
-  }
-
-  if (game.init())
-    return 1;
-  if (!game.tsc->Init())
-  {
-    fatal("Failed to initialize script engine.");
-    return 1;
-  }
-  game.setmode(GM_NORMAL);
-  // set null stage just to have something to do while we go to intro
-  game.switchstage.mapno = 0;
-
-  char *profile_name = GetProfileName(settings->last_save_slot);
-  if (settings->skip_intro && file_exists(profile_name))
-    game.switchstage.mapno = LOAD_GAME;
-  else
-    game.setmode(GM_INTRO);
-
-  free(profile_name);
-
-  // for debug
-  if (game.paused)
-  {
-    game.switchstage.mapno        = 0;
-    game.switchstage.eventonentry = 0;
-  }
-
-  game.running = true;
-  freshstart   = true;
-
-  LOG_INFO("Entering main loop...");
-
-  while (game.running)
-  {
-    // SSS/SPS persists across stage transitions until explicitly
-    // stopped, or you die & reload. It seems a bit risky to me,
-    // but that's the spec.
-    if (game.switchstage.mapno >= MAPNO_SPECIALS)
-    {
-      NXE::Sound::SoundManager::getInstance()->stopLoopSfx();
-      //			StopLoopSounds();
-    }
-
-    // enter next stage, whatever it may be
-    if (game.switchstage.mapno == LOAD_GAME || game.switchstage.mapno == LOAD_GAME_FROM_MENU)
-    {
-      if (game.switchstage.mapno == LOAD_GAME_FROM_MENU)
-        freshstart = true;
-
-      LOG_DEBUG("= Loading game =");
-      if (game_load(settings->last_save_slot))
-      {
-        fatal("savefile error");
-        goto ingame_error;
-      }
-      fade.set_full(FADE_IN);
-    }
-    else if (game.switchstage.mapno == TITLE_SCREEN)
-    {
-      LOG_DEBUG("= Title screen =");
-      game.curmap = TITLE_SCREEN;
-    }
-    else
-    {
-      if (game.switchstage.mapno == NEW_GAME || game.switchstage.mapno == NEW_GAME_FROM_MENU)
-      {
-        bool show_intro = (game.switchstage.mapno == NEW_GAME_FROM_MENU || ResourceManager::getInstance()->isMod());
-        InitNewGame(show_intro);
-      }
-
-      // slide weapon bar on first intro to Start Point
-      if (game.switchstage.mapno == STAGE_START_POINT && game.switchstage.eventonentry == 91)
-      {
-        freshstart = true;
-      }
-
-      // switch maps
-      if (load_stage(game.switchstage.mapno))
-        goto ingame_error;
-
-      player->x = (game.switchstage.playerx * TILE_W) * CSFI;
-      player->y = (game.switchstage.playery * TILE_H) * CSFI;
-    }
-
-    // start the level
-    if (game.initlevel())
-      return 1;
-
-    if (freshstart)
-      weapon_introslide();
-
-    gameloop();
-    game.stageboss.OnMapExit();
-    freshstart = false;
-  }
-
-shutdown:;
-  game.tsc->Close();
-  game.close();
-  Carets::close();
-
-  input_close();
-  textbox.Deinit();
-  NXE::Sound::SoundManager::getInstance()->shutdown();
-  Renderer::getInstance()->close();
-#if defined(__SWITCH__)
-  romfsExit();
-#endif
-  SDL_Quit();
-  return error;
-
-ingame_error:;
-  LOG_CRITICAL("");
-  LOG_CRITICAL(" ************************************************");
-  LOG_CRITICAL(" * An in-game error occurred. Game shutting down.");
-  LOG_CRITICAL(" ************************************************");
-  error = true;
-  goto shutdown;
+  return main_port();
 }

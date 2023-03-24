@@ -38,11 +38,10 @@ void assets_init(uint8_t *header, uint8_t *(*loader_func)(uint32_t, uint32_t))
   while (strcmp((char*)header, "tail") != 0)
   {
     MapEntry entry;
-    entry.offset = (header[31] << 24) | (header[30] << 16) | (header[29] << 8) | header[28];
-    header += 32;
-    entry.size = (header[31] << 24) | (header[30] << 16) | (header[29] << 8) | header[28];
-    entry.size -= entry.offset;
-    data_map[(char*)(header - 32)] = entry;
+    entry.offset = (header[59] << 24) | (header[58] << 16) | (header[57] << 8) | header[56];
+    entry.size   = (header[63] << 24) | (header[62] << 16) | (header[61] << 8) | header[60];
+    data_map[(char*)header] = entry;
+    header += 64;
   }
 
   data_loader = loader_func;

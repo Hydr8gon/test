@@ -39,7 +39,7 @@ Renderer *Renderer::getInstance()
 
 bool Renderer::init(int resolution)
 {
-    return false;
+    return true;
 }
 
 void Renderer::close()
@@ -73,6 +73,10 @@ int Renderer::getResolutionCount()
 bool Renderer::flushAll()
 {
     return false;
+}
+
+void Renderer::showLoadingScreen()
+{
 }
 
 void Renderer::drawSurface(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)

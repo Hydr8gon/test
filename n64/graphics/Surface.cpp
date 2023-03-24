@@ -39,7 +39,8 @@ bool Surface::loadImage(const std::string &pbm_name, bool use_colorkey)
 
 Surface *Surface::fromFile(const std::string &pbm_name, bool use_colorkey)
 {
-    return nullptr;
+    static Surface dummy;
+    return &dummy;
 }
 
 int Surface::width()

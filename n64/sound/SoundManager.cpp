@@ -39,7 +39,7 @@ SoundManager *SoundManager::getInstance()
 
 bool SoundManager::init()
 {
-    return false;
+    return true;
 }
 
 void SoundManager::shutdown()

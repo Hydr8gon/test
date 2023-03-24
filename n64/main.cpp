@@ -19,23 +19,38 @@
 
 #include <libdragon.h>
 
-#include "../src/caret.h"
+#include "../src/assets.h"
 #include "../src/game.h"
-#include "../src/trig.h"
+#include "../src/main_port.h"
 
 int fps = 0;
 int flipacceltime = 0;
+
+void gameloop(void)
+{
+    game.tick();
+}
+
+uint8_t *data_loader(uint32_t offset, uint32_t size)
+{
+    // Stream data from the data.bin file appended to the ROM
+    uint8_t *data = new uint8_t[(size + 3) & ~3];
+    for (uint32_t i = 0; i < size; i += 4)
+        *(uint32_t*)&data[i] = *(uint32_t*)(0xB0200000 + offset + i);
+    return data;
+}
 
 int main()
 {
     console_init();
     console_set_render_mode(RENDER_AUTOMATIC);
 
-    trig_init();
-    textbox.Init();
-    Carets::init();
-    game.init();
+    // Load the data header into memory for parsing
+    uint8_t *data_bin = new uint8_t[0x10000];
+    for (uint32_t i = 0; i < 0x10000; i += 4)
+        *(uint32_t*)&data_bin[i] = *(uint32_t*)(0xB0200000 + i);
+    assets_init(data_bin, data_loader);
+    delete[] data_bin;
 
-    while (true);
-    return 0;
+    return main_port();
 }

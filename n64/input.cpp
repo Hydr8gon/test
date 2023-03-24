@@ -25,6 +25,11 @@ in_action last_sdl_action;
 int ACCEPT_BUTTON = JUMPKEY;
 int DECLINE_BUTTON = FIREKEY;
 
+bool input_init(void)
+{
+    return true;
+}
+
 void input_remap(int keyindex, in_action sdl_key)
 {
 }
@@ -39,6 +44,10 @@ const std::string input_get_name(int index)
 }
 
 void input_set_mappings(in_action *array)
+{
+}
+
+void input_close(void)
 {
 }
 
