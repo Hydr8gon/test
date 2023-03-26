@@ -5,7 +5,7 @@
 #include "../object.h"
 #include "Surface.h"
 #include "Font.h"
-#include "Tileset.h"
+#include "../Tileset.h"
 #include "Sprites.h"
 
 

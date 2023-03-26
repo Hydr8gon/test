@@ -19,6 +19,11 @@
 
 #include "../../src/graphics/Renderer.h"
 
+#include <libdragon.h>
+
+extern display_context_t disp;
+extern uint32_t color2;
+
 namespace NXE
 {
 namespace Graphics
@@ -39,7 +44,9 @@ Renderer *Renderer::getInstance()
 
 bool Renderer::init(int resolution)
 {
-    return true;
+    // Initialize the libdragon display system
+    display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE);
+    return sprites.init();
 }
 
 void Renderer::close()
@@ -81,6 +88,9 @@ void Renderer::showLoadingScreen()
 
 void Renderer::drawSurface(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
 {
+    // Draw a placeholder rectangle just to see something
+    if (dstx >= 0 && dsty >= 0 && dstx + wd < 320 && dsty + ht < 240)
+        graphics_draw_box(disp, dstx, dsty, wd, ht, (color2 -= 8));
 }
 
 void Renderer::blitPatternAcross(Surface *sfc, int x_dst, int y_dst, int y_src, int height)

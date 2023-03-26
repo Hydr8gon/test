@@ -22,13 +22,23 @@
 #include "../src/assets.h"
 #include "../src/game.h"
 #include "../src/main_port.h"
+#include "../src/input.h"
 
 int fps = 0;
 int flipacceltime = 0;
 
+display_context_t disp;
+uint32_t color, color2;
+
 void gameloop(void)
 {
+    // Run a frame of the game
+    input_poll();
+    while(!(disp = display_lock()));
+    graphics_fill_screen(disp, 0);
+    color = color2 = 0;
     game.tick();
+    display_show(disp);
 }
 
 uint8_t *data_loader(uint32_t offset, uint32_t size)
@@ -42,9 +52,6 @@ uint8_t *data_loader(uint32_t offset, uint32_t size)
 
 int main()
 {
-    console_init();
-    console_set_render_mode(RENDER_AUTOMATIC);
-
     // Load the data header into memory for parsing
     uint8_t *data_bin = new uint8_t[0x10000];
     for (uint32_t i = 0; i < 0x10000; i += 4)

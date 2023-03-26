@@ -19,14 +19,12 @@
 
 #include "../src/input.h"
 
-bool inputs[INPUT_COUNT];
-bool lastinputs[INPUT_COUNT];
-in_action last_sdl_action;
-int ACCEPT_BUTTON = JUMPKEY;
-int DECLINE_BUTTON = FIREKEY;
+#include <libdragon.h>
 
 bool input_init(void)
 {
+    // Initialize libdragon controller input
+    controller_init();
     return true;
 }
 
@@ -41,29 +39,32 @@ in_action input_get_mapping(int keyindex)
 
 const std::string input_get_name(int index)
 {
+    return "";
 }
 
 void input_set_mappings(in_action *array)
 {
 }
 
+void input_poll(void)
+{
+    // Scan and update the game's inputs
+    controller_scan();
+    struct controller_data keys = get_keys_held();
+    inputs[LEFTKEY]      = keys.c->left;
+    inputs[RIGHTKEY]     = keys.c->right;
+    inputs[UPKEY]        = keys.c->up;
+    inputs[DOWNKEY]      = keys.c->down;
+    inputs[JUMPKEY]      = keys.c->A;
+    inputs[FIREKEY]      = keys.c->B;
+    inputs[STRAFEKEY]    = keys.c->Z;
+    inputs[PREVWPNKEY]   = keys.c->L;
+    inputs[NEXTWPNKEY]   = keys.c->R;
+    inputs[INVENTORYKEY] = keys.c->start;
+}
+
 void input_close(void)
 {
-}
-
-bool buttondown(void)
-{
-    return false;
-}
-
-bool buttonjustpushed(void)
-{
-    return false;
-}
-
-bool justpushed(int k)
-{
-    return false;
 }
 
 void rumble(float str, uint32_t len)

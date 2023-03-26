@@ -11,15 +11,7 @@
 #include <array>
 
 in_action mappings[INPUT_COUNT];
-
-bool inputs[INPUT_COUNT];
-bool lastinputs[INPUT_COUNT];
-in_action last_sdl_action;
 SDL_Joystick *joy;
-
-int ACCEPT_BUTTON = JUMPKEY;
-int DECLINE_BUTTON = FIREKEY;
-
 
 bool input_init(void)
 {
@@ -413,37 +405,4 @@ void input_close(void)
   {
     SDL_JoystickClose(joy);
   }
-}
-
-/*
-void c------------------------------() {}
-*/
-
-static const int buttons[] = {JUMPKEY, FIREKEY, STRAFEKEY, ACCEPT_BUTTON, DECLINE_BUTTON, 0};
-
-bool buttondown(void)
-{
-  for (int i = 0; buttons[i]; i++)
-  {
-    if (inputs[buttons[i]])
-      return 1;
-  }
-
-  return 0;
-}
-
-bool buttonjustpushed(void)
-{
-  for (int i = 0; buttons[i]; i++)
-  {
-    if (inputs[buttons[i]] && !lastinputs[buttons[i]])
-      return 1;
-  }
-
-  return 0;
-}
-
-bool justpushed(int k)
-{
-  return (inputs[k] && !lastinputs[k]);
 }

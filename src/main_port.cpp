@@ -13,6 +13,42 @@
 
 #include <cstring>
 
+bool inputs[INPUT_COUNT];
+bool lastinputs[INPUT_COUNT];
+in_action last_sdl_action;
+
+int ACCEPT_BUTTON = JUMPKEY;
+int DECLINE_BUTTON = FIREKEY;
+
+static const int buttons[] = {JUMPKEY, FIREKEY, STRAFEKEY, ACCEPT_BUTTON, DECLINE_BUTTON, 0};
+
+bool buttondown(void)
+{
+  for (int i = 0; buttons[i]; i++)
+  {
+    if (inputs[buttons[i]])
+      return 1;
+  }
+
+  return 0;
+}
+
+bool buttonjustpushed(void)
+{
+  for (int i = 0; buttons[i]; i++)
+  {
+    if (inputs[buttons[i]] && !lastinputs[buttons[i]])
+      return 1;
+  }
+
+  return 0;
+}
+
+bool justpushed(int k)
+{
+  return (inputs[k] && !lastinputs[k]);
+}
+
 using namespace NXE::Graphics;
 using namespace NXE::Sound;
 using namespace NXE::Utils;

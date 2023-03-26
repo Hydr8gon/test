@@ -1,7 +1,7 @@
 #ifndef _TILESET_H
 #define _TILESET_H
 
-#include "Surface.h"
+#include "graphics/Surface.h"
 
 #define TILE_W 16
 #define TILE_H 16

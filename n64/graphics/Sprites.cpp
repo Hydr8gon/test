@@ -19,31 +19,15 @@
 
 #include "../../src/graphics/Sprites.h"
 
+#include <libdragon.h>
+
+extern display_context_t disp;
+extern uint32_t color;
+
 namespace NXE
 {
 namespace Graphics
 {
-
-Sprites::Sprites()
-{
-}
-
-Sprites::~Sprites()
-{
-}
-
-bool Sprites::init()
-{
-    return false;
-}
-
-void Sprites::close()
-{
-}
-
-void Sprites::flushSheets()
-{
-}
 
 void Sprites::blitSprite(int x, int y, int s, int frame, uint8_t dir, int xoff, int yoff, int wd, int ht, int alpha)
 {
@@ -55,6 +39,9 @@ void Sprites::blitSpriteMirrored(int x, int y, int s, int frame, uint8_t dir, in
 
 void Sprites::drawSprite(int x, int y, int s, int frame, uint8_t dir)
 {
+    // Draw a placeholder rectangle just to see something
+    if (x >= 0 && y >= 0 && x + sprites[s].w < 320 && y + sprites[s].h < 240)
+        graphics_draw_box(disp, x, y, sprites[s].w, sprites[s].h, (color += 8));
 }
 
 void Sprites::drawSpriteMirrored(int x, int y, int s, int frame, uint8_t dir)

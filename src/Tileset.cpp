@@ -1,11 +1,11 @@
 // manages the tileset
 #include "Tileset.h"
 
-#include "../ResourceManager.h"
-#include "../config.h"
-#include "../nx.h"
-#include "Surface.h"
-#include "Renderer.h"
+#include "ResourceManager.h"
+#include "config.h"
+#include "nx.h"
+#include "graphics/Surface.h"
+#include "graphics/Renderer.h"
 
 #include <cassert>
 #include <cstdio>

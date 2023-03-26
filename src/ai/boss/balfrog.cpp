@@ -5,7 +5,7 @@
 #include "../../common/misc.h"
 #include "../../game.h"
 #include "../../graphics/Renderer.h"
-#include "../../graphics/Tileset.h"
+#include "../../Tileset.h"
 #include "../../map.h"
 #include "../../player.h"
 #include "../../sound/SoundManager.h"

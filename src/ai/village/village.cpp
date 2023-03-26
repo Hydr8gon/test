@@ -2,7 +2,7 @@
 
 #include "../../common/misc.h"
 #include "../../game.h"
-#include "../../graphics/Tileset.h"
+#include "../../Tileset.h"
 #include "../../player.h"
 #include "../../sound/SoundManager.h"
 #include "../ai.h"
