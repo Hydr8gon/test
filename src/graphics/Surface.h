@@ -23,16 +23,12 @@ public:
 
   int width();
   int height();
-#ifndef NO_SDL
-  SDL_Texture* texture();
-#endif
+  void *texture();
 
 private:
   void cleanup();
 
-#ifndef NO_SDL
-  SDL_Texture *_texture;
-#endif
+  void *_texture;
   int _width;
   int _height;
 

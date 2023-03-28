@@ -19,6 +19,7 @@
 
 #include "../src/input.h"
 
+#include <cstring>
 #include <libdragon.h>
 
 bool input_init(void)
@@ -51,6 +52,7 @@ void input_poll(void)
     // Scan and update the game's inputs
     controller_scan();
     struct controller_data keys = get_keys_held();
+    memcpy(lastinputs, inputs, sizeof(lastinputs));
     inputs[LEFTKEY]      = keys.c->left;
     inputs[RIGHTKEY]     = keys.c->right;
     inputs[UPKEY]        = keys.c->up;

@@ -83,7 +83,7 @@ int Surface::height()
   return _height / Renderer::getInstance()->scale;
 }
 
-SDL_Texture* Surface::texture()
+void *Surface::texture()
 {
   return _texture;
 }
@@ -92,7 +92,7 @@ void Surface::cleanup()
 {
   if (_texture)
   {
-    SDL_DestroyTexture(_texture);
+    SDL_DestroyTexture((SDL_Texture*)_texture);
     _texture = nullptr;
   }
 }

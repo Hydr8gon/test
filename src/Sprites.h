@@ -5,8 +5,8 @@
 #define MAX_SPRITESHEETS 128
 #define MAX_SPRITES 512
 
-#include "../siflib/sif.h"
-#include "Surface.h"
+#include "siflib/sif.h"
+#include "graphics/Surface.h"
 
 #include <vector>
 #include <string>

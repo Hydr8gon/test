@@ -28,7 +28,6 @@ int fps = 0;
 int flipacceltime = 0;
 
 display_context_t disp;
-uint32_t color, color2;
 
 void gameloop(void)
 {
@@ -36,8 +35,9 @@ void gameloop(void)
     input_poll();
     while(!(disp = display_lock()));
     graphics_fill_screen(disp, 0);
-    color = color2 = 0;
+    rdp_attach(disp);
     game.tick();
+    rdp_detach();
     display_show(disp);
 }
 

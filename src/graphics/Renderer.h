@@ -6,7 +6,7 @@
 #include "Surface.h"
 #include "Font.h"
 #include "../Tileset.h"
-#include "Sprites.h"
+#include "../Sprites.h"
 
 
 namespace NXE

@@ -22,7 +22,6 @@
 #include <libdragon.h>
 
 extern display_context_t disp;
-extern uint32_t color2;
 
 namespace NXE
 {
@@ -45,7 +44,11 @@ Renderer *Renderer::getInstance()
 bool Renderer::init(int resolution)
 {
     // Initialize the libdragon display system
-    display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE);
+    display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, ANTIALIAS_RESAMPLE);
+    rdp_init();
+    rdp_set_texture_flush(FLUSH_STRATEGY_NONE);
+    rdp_set_default_clipping();
+    rdp_enable_texture_copy();
     return sprites.init();
 }
 
@@ -88,9 +91,20 @@ void Renderer::showLoadingScreen()
 
 void Renderer::drawSurface(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
 {
-    // Draw a placeholder rectangle just to see something
-    if (dstx >= 0 && dsty >= 0 && dstx + wd < 320 && dsty + ht < 240)
-        graphics_draw_box(disp, dstx, dsty, wd, ht, (color2 -= 8));
+    // Get the surface's sprite
+    sprite_t *sprite = (sprite_t*)src->texture();
+    sprite->hslices = sprite->width / wd;
+    sprite->vslices = sprite->height / ht;
+
+    // Draw the sprite with the RDP
+    rdp_sync(SYNC_PIPE);
+    rdp_load_texture_stride(0, 0, MIRROR_DISABLED, sprite, (srcy / ht) * sprite->hslices + (srcx / wd));
+    rdp_draw_sprite(0, dstx, dsty, MIRROR_DISABLED);
+}
+
+void Renderer::drawSurfaceMirrored(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
+{
+    drawSurface(src, dstx, dsty, srcx, srcy, wd, ht);
 }
 
 void Renderer::blitPatternAcross(Surface *sfc, int x_dst, int y_dst, int y_src, int height)

@@ -328,8 +328,8 @@ void Renderer::drawSurface(Surface *src, int dstx, int dsty, int srcx, int srcy,
   if (_need_clip)
     clipScaled(srcrect, dstrect);
 
-  SDL_SetTextureAlphaMod(src->texture(), src->alpha);
-  if (SDL_RenderCopy(_renderer, src->texture(), &srcrect, &dstrect))
+  SDL_SetTextureAlphaMod((SDL_Texture*)src->texture(), src->alpha);
+  if (SDL_RenderCopy(_renderer, (SDL_Texture*)src->texture(), &srcrect, &dstrect))
   {
     LOG_ERROR("Renderer::drawSurface: SDL_RenderCopy failed: {}", SDL_GetError());
   }
@@ -356,8 +356,8 @@ void Renderer::drawSurfaceMirrored(Surface *src, int dstx, int dsty, int srcx, i
   if (_need_clip)
     clipScaled(srcrect, dstrect);
 
-  SDL_SetTextureAlphaMod(src->texture(), src->alpha);
-  if (SDL_RenderCopyEx(_renderer, src->texture(), &srcrect, &dstrect, 0, NULL, SDL_FLIP_HORIZONTAL))
+  SDL_SetTextureAlphaMod((SDL_Texture*)src->texture(), src->alpha);
+  if (SDL_RenderCopyEx(_renderer, (SDL_Texture*)src->texture(), &srcrect, &dstrect, 0, NULL, SDL_FLIP_HORIZONTAL))
   {
     LOG_ERROR("Renderer::drawSurface: SDL_RenderCopy failed: {}", SDL_GetError());
   }
@@ -386,7 +386,7 @@ void Renderer::blitPatternAcross(Surface *sfc, int x_dst, int y_dst, int y_src, 
   {
     dstrect.x = x;
     dstrect.y = y;
-    SDL_RenderCopy(_renderer, sfc->texture(), &srcrect, &dstrect);
+    SDL_RenderCopy(_renderer, (SDL_Texture*)sfc->texture(), &srcrect, &dstrect);
     x += sfc->width()  * scale;
   } while (x < destwd);
 }
