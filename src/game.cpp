@@ -607,13 +607,8 @@ bool game_load(int num)
   Profile p;
 
   LOG_DEBUG("game_load: loading savefile {}", num);
-  char *profile_name = GetProfileName(num);
-  if (profile_load(profile_name, &p))
-  {
-    free(profile_name);
+  if (profile_load(num, &p))
     return 1;
-  }
-  free(profile_name);
 
   return game_load(&p);
 }
@@ -684,14 +679,9 @@ bool game_save(int num)
 
   if (game_save(&p))
     return 1;
-  char *profile_name = GetProfileName(num);
-  if (profile_save(profile_name, &p))
-  {
-    free(profile_name);
-    return 1;
-  }
 
-  free(profile_name);
+  if (profile_save(num, &p))
+    return 1;
 
   return 0;
 }

@@ -19,66 +19,127 @@
 #define MAX_WPN_SLOTS 8
 #define MAX_TELE_SLOTS 8
 
+static size_t pptr;
+
+static uint16_t pgeti(uint8_t *data)
+{
+  // Read a 16-bit value from profile data
+  pptr += 2;
+  return (data[pptr - 1] << 8) | data[pptr - 2];
+}
+
+static uint32_t pgetl(uint8_t *data)
+{
+  // Read a 32-bit value from profile data
+  pptr += 4;
+  return (data[pptr - 1] << 24) | (data[pptr - 2] << 16) | (data[pptr - 3] << 8) | data[pptr - 4];
+}
+
+static void pputi(uint16_t val, uint8_t *data)
+{
+  // Write a 16-bit value to profile data
+  pptr += 2;
+  data[pptr - 2] = val >> 0;
+  data[pptr - 1] = val >> 8;
+}
+
+static void pputl(uint32_t val, uint8_t *data)
+{
+  // Write a 32-bit value to profile data
+  pptr += 4;
+  data[pptr - 4] = val >>  0;
+  data[pptr - 3] = val >>  8;
+  data[pptr - 2] = val >> 16;
+  data[pptr - 1] = val >> 24;
+}
+
+static bool pverifystring(uint8_t *data, const char *str)
+{
+  bool result = true;
+  size_t length = strlen(str);
+
+  // Compare a string with one from profile data
+  for (size_t i = 0; i < length; i++)
+  {
+    if (data[pptr++] != str[i])
+    {
+      result = false;
+      break;
+    }
+  }
+
+  return result;
+}
+
+static void pputstringnonull(const char *str, uint8_t *data)
+{
+  // Write a string value to profile data
+  size_t length = strlen(str);
+  for (size_t i = 0; i < length; i++)
+    data[pptr++] = str[i];
+}
+
 // load savefile #num into the given Profile structure.
-bool profile_load(const char *pfname, Profile *file)
+bool profile_load(int num, Profile *file)
 {
   int i, curweaponslot;
-  FILE *fp;
+  uint8_t *data;
+  pptr = 0;
 
-  LOG_INFO("Loading profile from {}", pfname);
+  LOG_INFO("Loading profile {}", num);
 //  memset(file, 0, sizeof(Profile));
   file->wpnOrder.clear();
 
-  fp = myfopen(widen(pfname).c_str(), widen("rb").c_str());
-  if (!fp)
+  data = profile_load_data(num);
+  if (!data)
   {
-    LOG_ERROR("profile_load: unable to open '{}'", pfname);
+    LOG_ERROR("profile_load: unable to open profile {}", num);
     return 1;
   }
 
-  if (!fverifystring(fp, "Do041220"))
+  if (!pverifystring(data, "Do041220"))
   {
-    LOG_ERROR("profile_load: invalid savegame format: '{}'", pfname);
-    fclose(fp);
+    LOG_ERROR("profile_load: invalid savegame format for profile {}", num);
+    delete[] data;
     return 1;
   }
 
-  file->stage  = fgetl(fp);
-  file->songno = fgetl(fp);
+  file->stage  = pgetl(data);
+  file->songno = pgetl(data);
 
-  file->px   = fgetl(fp);
-  file->py   = fgetl(fp);
-  file->pdir = CVTDir(fgetl(fp));
+  file->px   = pgetl(data);
+  file->py   = pgetl(data);
+  file->pdir = CVTDir(pgetl(data));
 
-  file->maxhp         = fgeti(fp);
-  file->num_whimstars = fgeti(fp);
-  file->hp            = fgeti(fp);
+  file->maxhp         = pgeti(data);
+  file->num_whimstars = pgeti(data);
+  file->hp            = pgeti(data);
 
-  fgeti(fp);                   // unknown value
-  curweaponslot = fgetl(fp);   // current weapon (slot, not number, converted below)
-  fgetl(fp);                   // unknown value
-  file->equipmask = fgetl(fp); // equipped items
+  pgeti(data);                   // unknown value
+  curweaponslot = pgetl(data);   // current weapon (slot, not number, converted below)
+  pgetl(data);                   // unknown value
+  file->equipmask = pgetl(data); // equipped items
 
   // load weapons
-  fseek(fp, PF_WEAPONS_OFFS, SEEK_SET);
+  pptr = PF_WEAPONS_OFFS;
   file->wpnOrder.clear();
 
   for (i = 0; i < MAX_WPN_SLOTS; i++)
   {
-    int type = fgetl(fp);
+    int type = pgetl(data);
     if (!type)
       break;
     if (type < 0 || type >= WPN_COUNT)
     {
       LOG_ERROR("profile_load: invalid weapon type {} in slot {}", type, i);
-      fclose(fp);
+      delete[] data;
       return 1;
     }
 
-    int level   = fgetl(fp);
-    int xp      = fgetl(fp);
-    int maxammo = fgetl(fp);
-    int ammo    = fgetl(fp);
+    int level   = pgetl(data);
+    int xp      = pgetl(data);
+    int maxammo = pgetl(data);
+    int ammo    = pgetl(data);
 
     file->weapons[type].hasWeapon = true;
     file->weapons[type].level     = (level - 1);
@@ -95,10 +156,10 @@ bool profile_load(const char *pfname, Profile *file)
 
   // load inventory
   file->ninventory = 0;
-  fseek(fp, PF_INVENTORY_OFFS, SEEK_SET);
+  pptr = PF_INVENTORY_OFFS;
   for (i = 0; i < MAX_INVENTORY; i++)
   {
-    int item = fgetl(fp);
+    int item = pgetl(data);
     if (!item)
       break;
 
@@ -107,11 +168,11 @@ bool profile_load(const char *pfname, Profile *file)
 
   // load teleporter slots
   file->num_teleslots = 0;
-  fseek(fp, PF_TELEPORTER_OFFS, SEEK_SET);
+  pptr = PF_TELEPORTER_OFFS;
   for (i = 0; i < NUM_TELEPORTER_SLOTS; i++)
   {
-    int slotno   = fgetl(fp);
-    int scriptno = fgetl(fp);
+    int slotno   = pgetl(data);
+    int scriptno = pgetl(data);
     if (slotno == 0)
       break;
 
@@ -121,66 +182,60 @@ bool profile_load(const char *pfname, Profile *file)
   }
 
   // load flags
-  fseek(fp, PF_FLAGS_OFFS, SEEK_SET);
-  if (!fverifystring(fp, "FLAG"))
+  pptr = PF_FLAGS_OFFS;
+  if (!pverifystring(data, "FLAG"))
   {
     LOG_ERROR("profile_load: missing 'FLAG' marker");
-    fclose(fp);
+    delete[] data;
     return 1;
   }
 
-  fresetboolean();
-  for (i = 0; i < NUM_GAMEFLAGS; i++)
+  for (i = 0; i < NUM_GAMEFLAGS; i += 32)
   {
-    file->flags[i] = fbooleanread(fp);
+    uint32_t val = pgetl(data);
+    for (int j = 0; j < 32; j++)
+      file->flags[i + j] = (val >> j) & 1;
   }
 
-  fclose(fp);
+  delete[] data;
   return 0;
 }
 
-bool profile_save(const char *pfname, Profile *file)
+bool profile_save(int num, Profile *file)
 {
-  FILE *fp;
   int i;
+  uint8_t data[0x800];
+  pptr = 0;
 
-  // stat("Writing saved game to %s...", pfname);
-  fp = myfopen(widen(pfname).c_str(), widen("wb").c_str());
-  if (!fp)
-  {
-    LOG_ERROR("profile_save: unable to open {}", pfname);
-    return 1;
-  }
+  pputstringnonull("Do041220", data);
 
-  fputstringnonull("Do041220", fp);
+  pputl(file->stage, data);
+  pputl(file->songno, data);
 
-  fputl(file->stage, fp);
-  fputl(file->songno, fp);
+  pputl(file->px, data);
+  pputl(file->py, data);
+  pputl((file->pdir == RIGHT) ? 2 : 0, data);
 
-  fputl(file->px, fp);
-  fputl(file->py, fp);
-  fputl((file->pdir == RIGHT) ? 2 : 0, fp);
+  pputi(file->maxhp, data);
+  pputi(file->num_whimstars, data);
+  pputi(file->hp, data);
 
-  fputi(file->maxhp, fp);
-  fputi(file->num_whimstars, fp);
-  fputi(file->hp, fp);
-
-  fseek(fp, 0x2C, SEEK_SET);
-  fputi(file->equipmask, fp);
+  pptr = 0x2C;
+  pputi(file->equipmask, data);
 
   // save weapons
-  fseek(fp, PF_WEAPONS_OFFS, SEEK_SET);
+  pptr = PF_WEAPONS_OFFS;
   int slotno = 0, curweaponslot = 0;
 
   for (auto &i : file->wpnOrder)
   {
     if (file->weapons[i].hasWeapon)
     {
-      fputl(i, fp);
-      fputl(file->weapons[i].level + 1, fp);
-      fputl(file->weapons[i].xp, fp);
-      fputl(file->weapons[i].maxammo, fp);
-      fputl(file->weapons[i].ammo, fp);
+      pputl(i, data);
+      pputl(file->weapons[i].level + 1, data);
+      pputl(file->weapons[i].xp, data);
+      pputl(file->weapons[i].maxammo, data);
+      pputl(file->weapons[i].ammo, data);
 
       if (i == file->curWeapon)
         curweaponslot = slotno;
@@ -192,50 +247,55 @@ bool profile_save(const char *pfname, Profile *file)
   }
 
   if (slotno < MAX_WPN_SLOTS)
-    fputl(0, fp); // 0-type weapon: terminator
+    pputl(0, data); // 0-type weapon: terminator
 
   // go back and save slot no of current weapon
-  fseek(fp, PF_CURWEAPON_OFFS, SEEK_SET);
-  fputl(curweaponslot, fp);
+  pptr = PF_CURWEAPON_OFFS;
+  pputl(curweaponslot, data);
 
   // save inventory
-  fseek(fp, PF_INVENTORY_OFFS, SEEK_SET);
+  pptr = PF_INVENTORY_OFFS;
   for (i = 0; i < file->ninventory; i++)
   {
-    fputl(file->inventory[i], fp);
+    pputl(file->inventory[i], data);
   }
 
-  fputl(0, fp);
+  pputl(0, data);
 
   // write teleporter slots
-  fseek(fp, PF_TELEPORTER_OFFS, SEEK_SET);
+  pptr = PF_TELEPORTER_OFFS;
   for (i = 0; i < MAX_TELE_SLOTS; i++)
   {
     if (i < file->num_teleslots)
     {
-      fputl(file->teleslots[i].slotno, fp);
-      fputl(file->teleslots[i].scriptno, fp);
+      pputl(file->teleslots[i].slotno, data);
+      pputl(file->teleslots[i].scriptno, data);
     }
     else
     {
-      fputl(0, fp);
-      fputl(0, fp);
+      pputl(0, data);
+      pputl(0, data);
     }
   }
 
   // write flags
-  fseek(fp, PF_FLAGS_OFFS, SEEK_SET);
-  fputstringnonull("FLAG", fp);
+  pptr = PF_FLAGS_OFFS;
+  pputstringnonull("FLAG", data);
 
-  fresetboolean();
-  for (i = 0; i < NUM_GAMEFLAGS; i++)
+  for (i = 0; i < NUM_GAMEFLAGS; i += 32)
   {
-    fbooleanwrite(file->flags[i], fp);
+    uint32_t val = 0;
+    for (int j = 0; j < 32; j++)
+      val |= file->flags[i + j] << j;
+    pputl(val, data);
+  }
+  
+  if (!profile_save_data(num, data, pptr))
+  {
+    LOG_ERROR("profile_save: unable to open profile {}", num);
+    return 1;
   }
 
-  fbooleanflush(fp);
-
-  fclose(fp);
   return 0;
 }
 
@@ -243,8 +303,8 @@ bool profile_save(const char *pfname, Profile *file)
 void c------------------------------() {}
 */
 
-// returns the filename for a save file given it's number
-char *GetProfileName(int num)
+// returns the filename for a save file given its number
+std::string GetProfileName(int num)
 {
   std::string prof = ResourceManager::getInstance()->getPrefPath("");
 
@@ -264,18 +324,20 @@ char *GetProfileName(int num)
     out << (num + 1);
     profile = std::string(prof + "profile" + out.str() + ".dat");
   }
-  char *ret = (char *)malloc(profile.length() + 1);
-  memcpy(ret, profile.c_str(), profile.length() + 1);
-  return ret;
+
+  return profile;
 }
 
 // returns whether the given save file slot exists
 bool ProfileExists(int num)
 {
-  char *profile_name = GetProfileName(num);
-  bool ret           = file_exists(profile_name);
-  free(profile_name);
-  return ret;
+  if (uint8_t *data = profile_load_data(num))
+  {
+    delete[] data;
+    return true;
+  }
+
+  return false;
 }
 
 bool AnyProfileExists()

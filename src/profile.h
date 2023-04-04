@@ -41,9 +41,13 @@ struct Profile
   int num_teleslots = 0;
 };
 
-bool profile_load(const char *pfname, Profile *file);
-bool profile_save(const char *pfname, Profile *file);
-char *GetProfileName(int num);
+// Implemented in platform main.cpp
+uint8_t *profile_load_data(int num);
+bool profile_save_data(int num, uint8_t *data, size_t size);
+
+bool profile_load(int num, Profile *file);
+bool profile_save(int num, Profile *file);
+std::string GetProfileName(int num);
 bool ProfileExists(int num);
 bool AnyProfileExists();
 

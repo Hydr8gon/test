@@ -151,13 +151,10 @@ int main_port()
   // set null stage just to have something to do while we go to intro
   game.switchstage.mapno = 0;
 
-  char *profile_name = GetProfileName(settings->last_save_slot);
-  if (settings->skip_intro && file_exists(profile_name))
+  if (settings->skip_intro && ProfileExists(settings->last_save_slot))
     game.switchstage.mapno = LOAD_GAME;
   else
     game.setmode(GM_INTRO);
-
-  free(profile_name);
 
   // for debug
   if (game.paused)

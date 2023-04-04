@@ -28,6 +28,47 @@ int fps = 0;
 int flipacceltime = 0;
 
 display_context_t disp;
+uint32_t *sram = (uint32_t*)0xA8000000;
+
+uint32_t sram_read(uint32_t index)
+{
+    // Read a value from SRAM and wait between accesses
+    uint32_t value = sram[index];
+    volatile int wait = 0x100;
+    while (--wait);
+    return value;
+}
+
+void sram_write(uint32_t index, uint32_t value)
+{
+    // Write a value to SRAM and wait between accesses
+    sram[index] = value;
+    volatile int wait = 0x100;
+    while (--wait);
+}
+
+uint8_t *profile_load_data(int num)
+{
+    // Read profile data from SRAM
+    if (sram_read(0x1FFF - num) == 1) // File present
+    {
+        uint8_t *data = new uint8_t[0x800];
+        for (size_t i = 0; i < 0x800; i += 4)
+            *(uint32_t*)&data[i] = sram_read((num << 9) + (i >> 2));
+        return data;
+    }
+
+    return nullptr;
+}
+
+bool profile_save_data(int num, uint8_t *data, size_t size)
+{
+    // Write profile data to SRAM
+    sram_write(0x1FFF - num, 1); // File present
+    for (size_t i = 0; i < size; i += 4)
+        sram_write((num << 9) + (i >> 2), *(uint32_t*)&data[i]);
+    return true;
+}
 
 void gameloop(void)
 {

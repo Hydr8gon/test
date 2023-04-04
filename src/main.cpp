@@ -57,17 +57,35 @@ int32_t nexttick = 0;
 
 uint8_t *data_bin;
 
-/*static bool check_data_exists()
+uint8_t *profile_load_data(int num)
 {
-char fname[MAXPATHLEN];
+  // Read profile data from a file
+  if (FILE *fp = myfopen(GetProfileName(num).c_str(), "rb"))
+  {
+    fseek(fp, 0, SEEK_END);
+    size_t size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    uint8_t *data = new uint8_t[size];
+    fread(data, sizeof(uint8_t), size, fp);
+    fclose(fp);
+    return data;
+  }
 
-        sprintf(fname, "%s/npc.tbl", data_dir);
-        if (file_exists(fname)) return 0;
+  return nullptr;
+}
 
-        fatal("Missing \"data\" directory.\nPlease copy it over from a Doukutsu installation.");
+bool profile_save_data(int num, uint8_t *data, size_t size)
+{
+  // Write profile data to a file
+  if (FILE *fp = myfopen(GetProfileName(num).c_str(), "wb"))
+  {
+    fwrite(data, sizeof(uint8_t), size, fp);
+    fclose(fp);
+    return true;
+  }
 
-        return 1;
-}*/
+  return false;
+}
 
 void update_fps()
 {
