@@ -40,9 +40,9 @@ Surface::~Surface()
 static inline uint16_t indexToColor(uint8_t *data, uint8_t index)
 {
     // Convert a BMP index value to an RGBA5551 palette color
-    uint8_t b = data[index + 0x36] >> 3;
-    uint8_t g = data[index + 0x37] >> 3;
-    uint8_t r = data[index + 0x38] >> 3;
+    uint8_t b = data[(index << 2) + 0x36] >> 3;
+    uint8_t g = data[(index << 2) + 0x37] >> 3;
+    uint8_t r = data[(index << 2) + 0x38] >> 3;
     return (r << 11) | (g << 6) | (b << 1) | (bool)index;
 }
 
@@ -61,22 +61,52 @@ bool Surface::loadImage(const std::string &pbm_name, bool use_colorkey)
     sprite->height = _height;
     sprite->bitdepth = 2;
 
-    // Convert 4-bit palette BMP data to an RGBA5551 texture
-    for (uint32_t y = 0; y < _height; y++)
+    // Decode the BMP data
+    switch ((fp->data[29] << 8) | fp->data[28]) // Bits per pixel
     {
-        for (uint32_t x = 0; x < _width; x += 2)
-        {
-            uint32_t i = y * _width + x;
-            uint32_t j = (_height - y - 1) * _width + x;
-            uint16_t *dst = &((uint16_t*)sprite->data)[j];
-            uint8_t i1 = (fp->data[offset + (i >> 1)] >> 2) & 0x3C;
-            uint8_t i2 = (fp->data[offset + (i >> 1)] << 2) & 0x3C;
-            dst[0] = indexToColor(fp->data, i1);
-            dst[1] = indexToColor(fp->data, i2);
-        }
+        case 1:
+            // Convert 1-bit palette BMP data to an RGBA5551 texture
+            for (uint32_t y = 0; y < _height; y++)
+            {
+                for (uint32_t x = 0; x < _width; x += 8)
+                {
+                    uint16_t *dst = &((uint16_t*)sprite->data)[(_height - y - 1) * _width + x];
+                    uint8_t ind = fp->data[offset + ((y * ((_width + 0x1F) & ~0x1F) + x) >> 3)];
+                    for (uint32_t k = 0; k < 8; k++)
+                        dst[k] = indexToColor(fp->data, (ind >> k) & 0x1);
+                }
+            }
+            break;
+
+        case 4:
+            // Convert 4-bit palette BMP data to an RGBA5551 texture
+            for (uint32_t y = 0; y < _height; y++)
+            {
+                for (uint32_t x = 0; x < _width; x += 2)
+                {
+                    uint16_t *dst = &((uint16_t*)sprite->data)[(_height - y - 1) * _width + x];
+                    uint8_t ind = fp->data[offset + ((y * ((_width + 0x7) & ~0x7) + x) >> 1)];
+                    dst[0] = indexToColor(fp->data, (ind >> 4) & 0xF);
+                    dst[1] = indexToColor(fp->data, (ind >> 0) & 0xF);
+                }
+            }
+            break;
+
+        case 8:
+            // Convert 8-bit palette BMP data to an RGBA5551 texture
+            for (uint32_t y = 0; y < _height; y++)
+            {
+                for (uint32_t x = 0; x < _width; x++)
+                {
+                    uint16_t *dst = &((uint16_t*)sprite->data)[(_height - y - 1) * _width + x];
+                    uint8_t ind = fp->data[offset + (y * ((_width + 0x3) & ~0x3) + x)];
+                    dst[0] = indexToColor(fp->data, ind);
+                }
+            }
+            break;
     }
 
-    data_cache_hit_writeback_invalidate(sprite->data, sprite->width * sprite->height * sprite->bitdepth);
+    data_cache_hit_writeback_invalidate(sprite->data, _width * _height * 2);
     aclose(fp);
     return true;
 }

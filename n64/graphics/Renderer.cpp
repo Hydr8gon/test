@@ -23,6 +23,79 @@
 
 extern display_context_t disp;
 
+static uint32_t rdpBuffer[0x100];
+static uint32_t rdpStart = 0;
+static uint32_t rdpEnd = 0;
+
+static void rdpQueue(uint32_t data)
+{
+    // Add a 32-bit value to the RDP command buffer
+    rdpBuffer[rdpEnd++] = data;
+}
+
+static void rdpSend()
+{
+    // DMA the current command buffer to the RDP when ready
+    data_cache_hit_writeback_invalidate(&rdpBuffer[rdpStart], (rdpEnd - rdpStart) * 4);
+    while (*(volatile uint32_t*)0xA410000C & 0x600); // Start/end pending
+    *(volatile uint32_t*)0xA4100000 = (uint32_t)&rdpBuffer[rdpStart];
+    *(volatile uint32_t*)0xA4100004 = (uint32_t)&rdpBuffer[rdpEnd];
+
+    // Update the buffer start, wrapping near the end
+    if (rdpEnd > 0xC0) rdpEnd = 0;
+    rdpStart = rdpEnd;
+}
+
+static void rdpDrawTexture(sprite_t *sprite, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
+{
+    // Set the sprite map with an RDP set texture image command
+    rdpQueue(0xFD100000 | (sprite->width - 1)); // Width
+    rdpQueue((uint32_t)sprite->data); // Address
+    rdpSend();
+
+    // Set the tile parameters with an RDP set tile command
+    uint32_t rwd = 8;
+    while (rwd < wd) rwd <<= 1;
+    rdpQueue(0xF5100000 | ((rwd & 0x7F8) << 7)); // Line size
+    rdpQueue(0x00000000); // Wrapping
+    rdpSend();
+
+    // Load the texture into TMEM with an RDP load tile command
+    rdpQueue(0xF4000000 | ((srcx & 0x3FF) << 14) | ((srcy & 0x3FF) << 2)); // Low coordinates
+    rdpQueue((((srcx + wd - 1) & 0x3FF) << 14) | (((srcy + ht - 1) & 0x3FF) << 2)); // High coordinates
+    rdpSend();
+
+    // Define some texture rectangle parameters
+    int bx = dstx + wd - 1;
+    int by = dsty + ht - 1;
+    uint16_t s = srcx << 5;
+    uint16_t t = srcy << 5;
+
+    // Clip horizontally if the X-coordinate is less than 0
+    if (dstx < 0)
+    {
+        if (dstx <= -wd) return;
+        s -= (dstx << 5);
+        dstx = 0;
+    }
+
+    // Clip vertically if the Y-coordinate is less than 0
+    if (dsty < 0)
+    {
+        if (dsty <= -ht) return;
+        t -= (dsty << 5);
+        dsty = 0;
+    }
+
+    // Draw the texture with an RDP texture rectangle command
+    rdpQueue(0xE4000000 | (bx << 14) | (by << 2)); // Bottom coordinates
+    rdpQueue((dstx << 14) | (dsty << 2)); // Top coordinates
+    rdpQueue((s << 16) | t); // Texture coordinates
+    rdpQueue((0x1000 << 16) | 0x400); // Texture scaling
+    rdpSend();
+}
+
+
 namespace NXE
 {
 namespace Graphics
@@ -58,7 +131,7 @@ void Renderer::close()
 
 bool Renderer::initVideo()
 {
-    return false;
+    return true;
 }
 
 void Renderer::setFullscreen(bool enable)
@@ -67,12 +140,13 @@ void Renderer::setFullscreen(bool enable)
 
 bool Renderer::setResolution(int factor, bool restoreOnFailure)
 {
-    return false;
+    return true;
 }
 
 const gres_t *Renderer::getResolutions(bool full_list)
 {
-    return nullptr;
+    static NXE::Graphics::gres_t res[] = {{"320x240", 320, 240, 320, 240, 1, false, true}};
+    return res;
 }
 
 int Renderer::getResolutionCount()
@@ -82,7 +156,7 @@ int Renderer::getResolutionCount()
 
 bool Renderer::flushAll()
 {
-    return false;
+    return true;
 }
 
 void Renderer::showLoadingScreen()
@@ -91,15 +165,25 @@ void Renderer::showLoadingScreen()
 
 void Renderer::drawSurface(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
 {
-    // Get the surface's sprite
+    // Get the surface's sprite and rounded texture size
     sprite_t *sprite = (sprite_t*)src->texture();
-    sprite->hslices = sprite->width / wd;
-    sprite->vslices = sprite->height / ht;
+    uint32_t rwd = 8, rht = 8;
+    while (rwd < wd) rwd <<= 1;
+    while (rht < ht) rht <<= 1;
+    uint32_t size = (rwd / 8) * rht * 16;
 
-    // Draw the sprite with the RDP
-    rdp_sync(SYNC_PIPE);
-    rdp_load_texture_stride(0, 0, MIRROR_DISABLED, sprite, (srcy / ht) * sprite->hslices + (srcx / wd));
-    rdp_draw_sprite(0, dstx, dsty, MIRROR_DISABLED);
+    if (size <= 0x1000)
+    {
+        // Draw the sprite in one piece if it fits in TMEM
+        rdpDrawTexture(sprite, dstx, dsty, srcx, srcy, wd, ht);
+    }
+    else
+    {
+        // Draw the sprite in multiple pieces if it doesn't fit in TMEM
+        int pht = ht / (size / 0x1000);
+        for (int i = 0; i < ht; i += pht)
+            rdpDrawTexture(sprite, dstx, dsty + i, srcx, srcy + i, wd, pht);
+    }
 }
 
 void Renderer::drawSurfaceMirrored(Surface *src, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
