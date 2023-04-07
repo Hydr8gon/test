@@ -1,0 +1,81 @@
+name: Automatic Builds
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build-nxengine:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+    - name: Install libdragon
+      run: npm install -g libdragon
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Compile
+      run: |
+        libdragon init
+        libdragon make -j$(nproc)
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: nxengine
+        path: |
+          NXEngine64.z64
+          data/
+
+  build-nxextract:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+    - name: Install build tools
+      run: pacman -S mingw-w64-x86_64-gcc make --noconfirm
+      shell: msys2 {0}
+    - name: Compile
+      run: make -f Makefile.extract -j$(nproc)
+      shell: msys2 {0}
+      working-directory: ${{ github.workspace }}
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: nxextract
+        path: nxextract.exe
+
+  update-release:
+    runs-on: ubuntu-latest
+    needs: [build-nxengine, build-nxextract]
+
+    steps:
+    - name: Delete old release
+      uses: dev-drprasad/delete-tag-and-release@v0.2.1
+      with:
+        delete_release: true
+        tag_name: release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Get artifacts
+      uses: actions/download-artifact@v2
+    - name: Package artifacts
+      run: |
+        mv nxengine/NXEngine64.z64 nxengine/data .
+        mv nxextract/nxextract.exe .
+        zip -r nxengine64.zip NXEngine64.z64 nxextract.exe data
+    - name: Create new release
+      uses: ncipollo/release-action@v1
+      with:
+        name: Rolling Release
+        body: These are automatically updated builds of the latest commit.
+        artifacts: nxengine64.zip
+        tag: release
+        token: ${{ secrets.GITHUB_TOKEN }}

@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 static const char *filename = "Doukutsu.exe";
 
@@ -28,8 +29,11 @@ void list_files(std::string path)
   // Recursively build a list of files in a directory
   while ((entry = readdir(dir)))
   {
+    struct stat s;
     std::string name = entry->d_name;
-    if (entry->d_type == DT_DIR)
+    stat((path + "/" + name).c_str(), &s);
+
+    if (S_ISDIR(s.st_mode))
     {
       // Iterate through non-special subdirectories
       if (name[0] != '.')

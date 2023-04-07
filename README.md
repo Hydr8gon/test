@@ -1,28 +1,11 @@
-# NXEngine-evo
-A somewhat upgraded/refactored version of [NXEngine](http://nxengine.sourceforge.net/) by Caitlin Shaw.
+# NXEngine64
+A port of [NXEngine-evo](https://github.com/nxengine/nxengine-evo) to the N64.
 
-[![Discord chat](https://img.shields.io/discord/804396136252964954?label=Discord)](https://discord.gg/jnwmA7DhQh) [![Matrix chat](https://img.shields.io/matrix/nxengine-evo:ninetailed.ninja?server_fqdn=matrix.ninetailed.ninja&label=Matrix)](https://matrix.to/#/#nxengine-evo:ninetailed.ninja)
+### Downloads
+Automatic builds of the latest NXEngine64 are provided via GitHub Actions; you can download them on the [releases page](https://github.com/Hydr8gon/NXEngine64/releases). You will also need the original Cave Story with Aeon Genesis translation; a pre-patched version can be found [here](https://www.cavestory.org/downloads/cavestoryen.zip).
 
-![Screenshot](https://raw.githubusercontent.com/nxengine/nxengine-evo/master/screenshot.png)
+### Usage
+From NXEngine64, copy `NXEngine64.z64`, `nxextract.exe`, and the `data` folder to a new folder. From Cave Story, copy `Doukutsu.exe` and merge the `data` folder with the existing one. Run `nxextract.exe` to extract assets and append them to the N64 ROM. You should now be able to run `NXEngine64.z64`.
 
-## Running the game
- * Check the wiki for [Linux](https://github.com/nxengine/nxengine-evo/wiki/Building-on-Linux), [macOS](https://github.com/nxengine/nxengine-evo/wiki/Building-on-macOS), and [Windows](https://github.com/nxengine/nxengine-evo/wiki/Building-on-Windows)-specific instructions if you'd like to build from source.
- * Check the [Releases](https://github.com/nxengine/nxengine-evo/releases) page and download the latest version if you'd rather not build it yourself.
-
-## Differences from the original version of NXEngine:
-* Port to SDL2 (thanks to [PIlin](https://github.com/PIlin/NXEngine-iOS))
-* More resolutions and proper widescreen support up to Full HD (thanks to [EXL](https://github.com/EXL/NXEngine))
-* Animated character portraits
-* Modern main menu
-* Credits graphics specific to the Mimiga Mask ending
-* Localization support
-* Force feedback support
-* Custom soundtrack support
-* Initial mod support
-* Vita/Switch versions
-* Cleaner and partly-refactored code
-* Tons of gameplay-related bugfixes
-* Removed built-in data extractor
-* Removed replays, as they were buggy/not implemented anyway
-
-### Vita icon based on art by [ClockWorkInc](https://www.deviantart.com/clockworkinc)
+### Compiling
+To compile NXEngine64, you need to have [libdragon](https://github.com/DragonMinded/libdragon) installed. Once that's set up, you can simply run `make` in the project root directory to build. To compile the nxextract tool, run `make -f Makefile.extract`.

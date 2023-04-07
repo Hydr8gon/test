@@ -1,0 +1,34 @@
+NAME     := nxextract
+BUILD    := build-ext
+SOURCES  := src/extract src/common
+ARGS     := -g -O2 -DNO_SDL
+INCLUDES :=
+
+ifeq ($(OS),Windows_NT)
+  ARGS += -static
+endif
+
+CPPFILES := $(wildcard src/extract/*.cpp) src/common/misc.cpp src/stagedata.cpp
+HFILES   := $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.h))
+OFILES   := $(patsubst %.cpp,$(BUILD)/%.o,$(CPPFILES))
+
+all: $(NAME)
+
+$(NAME): $(OFILES)
+	g++ -o $@ $(ARGS) $^
+
+$(BUILD)/%.o: %.c $(HFILES) $(BUILD)
+	gcc -c -o $@ $(ARGS) $(INCLUDES) $<
+
+$(BUILD)/%.o: %.cpp $(HFILES) $(BUILD)
+	g++ -c -o $@ $(ARGS) $(INCLUDES) $<
+
+$(BUILD):
+	for dir in $(SOURCES); \
+	do \
+	mkdir -p $(BUILD)/$$dir; \
+	done
+
+clean:
+	rm -rf $(BUILD)
+	rm -f $(NAME)

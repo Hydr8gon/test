@@ -91,7 +91,7 @@ bool settings_load(Settings *setfile)
     setfile->sfx_volume = 100;
     setfile->music_volume = 100;
     setfile->music_interpolation = 0;
-    setfile->animated_facepics = true;
+    setfile->animated_facepics = false; // Disabled to save memory on N64
     setfile->lights = false;
     setfile->control_scheme = false;
     memset(setfile->language, 0, 256);

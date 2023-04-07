@@ -11,7 +11,7 @@ OFILES   := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CPPFILES))
 
 include $(N64_INST)/include/n64.mk
 
-N64_CXXFLAGS += -w -Ideps -DNO_SDL
+N64_CXXFLAGS += -Os -w -Ideps -DNO_SDL
 
 all: $(PROJ_NAME).z64
 
