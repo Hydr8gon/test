@@ -73,7 +73,7 @@ bool Surface::loadImage(const std::string &pbm_name, bool use_colorkey)
                     uint16_t *dst = &((uint16_t*)sprite->data)[(_height - y - 1) * _width + x];
                     uint8_t ind = fp->data[offset + ((y * ((_width + 0x1F) & ~0x1F) + x) >> 3)];
                     for (uint32_t k = 0; k < 8; k++)
-                        dst[k] = indexToColor(fp->data, (ind >> k) & 0x1);
+                        dst[k] = indexToColor(fp->data, (ind >> (7 - k)) & 0x1);
                 }
             }
             break;

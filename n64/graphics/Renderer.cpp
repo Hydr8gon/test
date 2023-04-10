@@ -122,7 +122,7 @@ bool Renderer::init(int resolution)
     rdp_set_texture_flush(FLUSH_STRATEGY_NONE);
     rdp_set_default_clipping();
     rdp_enable_texture_copy();
-    return sprites.init();
+    return font.load() && sprites.init();
 }
 
 void Renderer::close()
