@@ -27,6 +27,9 @@ static uint32_t rdpBuffer[0x100];
 static uint32_t rdpStart = 0;
 static uint32_t rdpEnd = 0;
 
+static int clipX = 0;
+static int clipY = 0;
+
 static void rdpQueue(uint32_t data)
 {
     // Add a 32-bit value to the RDP command buffer
@@ -77,19 +80,19 @@ static void rdpDrawTexture(sprite_t *sprite, int dstx, int dsty, int srcx, int s
     uint16_t t = srcy << 5;
 
     // Clip horizontally if the X-coordinate is less than 0
-    if (dstx < 0)
+    if (dstx < clipX)
     {
-        if (dstx <= -wd) return;
-        s -= (dstx << 5);
-        dstx = 0;
+        if (dstx - clipX <= -wd) return;
+        s -= ((dstx - clipX) << 5);
+        dstx = clipX;
     }
 
     // Clip vertically if the Y-coordinate is less than 0
-    if (dsty < 0)
+    if (dsty < clipY)
     {
-        if (dsty <= -ht) return;
-        t -= (dsty << 5);
-        dsty = 0;
+        if (dsty - clipY <= -ht) return;
+        t -= ((dsty - clipY) << 5);
+        dsty = clipY;
     }
 
     // Draw the texture with an RDP texture rectangle command
@@ -228,7 +231,7 @@ void Renderer::fillRect(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, ui
 void Renderer::setClip(int x, int y, int w, int h)
 {
     // Set the render clip coordinates with an RDP set scissor command
-    rdpQueue(0xED000000 | (x << 14) | (y << 2));
+    rdpQueue(0xED000000 | ((clipX = x) << 14) | ((clipY = y) << 2));
     rdpQueue(((x + w) << 14) | ((y + h) << 2));
     rdpSend();
 }
