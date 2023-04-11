@@ -75,7 +75,6 @@ void gameloop(void)
     // Run a frame of the game
     input_poll();
     while(!(disp = display_lock()));
-    graphics_fill_screen(disp, 0);
     rdp_attach(disp);
     game.tick();
     rdp_detach();

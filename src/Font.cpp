@@ -26,8 +26,6 @@ Font::Font()
 
 bool Font::load()
 {
-  cleanup();
-
   // special empty glyph
   _glyphs[0] = Font::Glyph{0, 0, 0, 0, 0, 0, 0, 0, 0};
 

@@ -48,6 +48,11 @@ static void rdpSend()
 
 static void rdpDrawTexture(sprite_t *sprite, int dstx, int dsty, int srcx, int srcy, int wd, int ht)
 {
+    // Configure rendering for textures with an RDP set other modes command
+    rdpQueue(0xEFA000FF);
+    rdpQueue(0x00004001);
+    rdpSend();
+
     // Set the sprite map with an RDP set texture image command
     rdpQueue(0xFD100000 | (sprite->width - 1)); // Width
     rdpQueue((uint32_t)sprite->data); // Address
@@ -197,18 +202,41 @@ void Renderer::blitPatternAcross(Surface *sfc, int x_dst, int y_dst, int y_src, 
 
 void Renderer::clearScreen(uint8_t r, uint8_t g, uint8_t b)
 {
+    // Draw a rectangle covering the whole screen
+    fillRect(0, 0, 320, 240, r, g, b);
 }
 
 void Renderer::fillRect(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, uint8_t b)
 {
+    // Configure rendering for fills with an RDP set other modes command
+    rdpQueue(0xEFB000FF);
+    rdpQueue(0x00004000);
+    rdpSend();
+
+    // Set the rectangle color with an RDP set fill color command
+    rdpQueue(0xF7000000);
+    uint16_t color = ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | 0x1;
+    rdpQueue((color << 16) | color);
+    rdpSend();
+
+    // Draw the rectangle with an RDP fill rectangle command
+    rdpQueue(0xF6000000 | (x2 << 14) | (y2 << 2));
+    rdpQueue((x1 << 14) | (y1 << 2));
+    rdpSend();
 }
 
 void Renderer::setClip(int x, int y, int w, int h)
 {
+    // Set the render clip coordinates with an RDP set scissor command
+    rdpQueue(0xED000000 | (x << 14) | (y << 2));
+    rdpQueue(((x + w) << 14) | ((y + h) << 2));
+    rdpSend();
 }
 
 void Renderer::clearClip()
 {
+    // Reset the render clip coordinates
+    setClip(0, 0, 320, 240);
 }
 
 void Renderer::drawSpotLight(int x, int y, Object* o, int r, int g, int b, int upscale)
