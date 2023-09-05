@@ -347,16 +347,16 @@ void TextBox::DrawTextBox()
   {
     if (rtl())
     {
-      if (settings->animated_facepics)
+      if (settings->animated_facepics == 1)
         Renderer::getInstance()->sprites.drawSpriteMirrored(fCoords.x + fCoords.w - FACE_W + fFaceXOffset - 14, fCoords.y + CONTENT_Y - 3, SPR_FACES_0 + faceFrame, fFace);
-      else
+      else if (settings->animated_facepics == 0)
         Renderer::getInstance()->sprites.drawSpriteMirrored(fCoords.x + fCoords.w - FACE_W + fFaceXOffset - 14, fCoords.y + CONTENT_Y - 3, SPR_FACES, fFace);
     }
     else
     {
-      if (settings->animated_facepics)
+      if (settings->animated_facepics == 1)
         Renderer::getInstance()->sprites.drawSprite((fCoords.x + 14) + fFaceXOffset, fCoords.y + CONTENT_Y - 3, SPR_FACES_0 + faceFrame, fFace);
-      else
+      else if (settings->animated_facepics == 0)
         Renderer::getInstance()->sprites.drawSprite((fCoords.x + 14) + fFaceXOffset, fCoords.y + CONTENT_Y - 3, SPR_FACES, fFace);
     }
 
@@ -415,7 +415,7 @@ void TextBox::AddNextChar(void)
   bool line_at_once = (fFlags & TB_LINE_AT_ONCE);
   int maxlinelen    = GetMaxLineLen();
 
-  if (settings->animated_facepics)
+  if (settings->animated_facepics == 1)
   {
     if (++faceTimer > 1)
     {

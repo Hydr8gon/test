@@ -318,5 +318,6 @@ int main(int argc, char *argv[])
   }
 
   assets_init(data_bin, data_loader);
+  settings_load();
   return main_port();
 }

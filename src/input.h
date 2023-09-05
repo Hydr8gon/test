@@ -4,6 +4,7 @@
 #ifndef NO_SDL
 #include <SDL.h>
 #endif
+#include <cstdint>
 #include <string>
 
 typedef struct

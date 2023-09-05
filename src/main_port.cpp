@@ -99,10 +99,6 @@ int main_port()
   // start up inputs first thing because settings_load may remap them
   input_init();
 
-  // load settings, or at least get the defaults,
-  // so we know the initial screen resolution.
-  settings_load();
-
   if (!Renderer::getInstance()->init(settings->resolution))
   {
     fatal("Failed to initialize graphics.");

@@ -19,7 +19,7 @@ struct Settings
   bool skip_intro;
   bool rumble;
   bool strafing;
-  bool animated_facepics;
+  uint8_t animated_facepics;
   bool lights;
   bool control_scheme;
   int16_t sfx_volume;

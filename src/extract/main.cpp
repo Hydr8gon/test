@@ -2,6 +2,7 @@
 #include "extractpxt.h"
 #include "extractstages.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

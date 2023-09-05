@@ -21,8 +21,9 @@
 
 #include "../src/assets.h"
 #include "../src/game.h"
-#include "../src/main_port.h"
 #include "../src/input.h"
+#include "../src/main_port.h"
+#include "../src/settings.h"
 
 int fps = 0;
 int flipacceltime = 0;
@@ -99,5 +100,9 @@ int main()
     assets_init(data_bin, data_loader);
     delete[] data_bin;
 
+    // Enable animated faces if RAM is expanded; otherwise disable faces completely
+    // If faces are loaded with only 4MB RAM, the game can run out of memory and crash
+    settings_load();
+    settings->animated_facepics = is_memory_expanded() ? 1 : 2;
     return main_port();
 }
