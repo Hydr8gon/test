@@ -21,7 +21,7 @@ jobs:
         libdragon init
         libdragon make -j$(nproc)
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nxengine
         path: |
@@ -47,7 +47,7 @@ jobs:
       shell: msys2 {0}
       working-directory: ${{ github.workspace }}
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: nxextract
         path: nxextract.exe
@@ -65,12 +65,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Get artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
     - name: Package artifacts
       run: |
-        mv nxengine/NXEngine64.z64 nxengine/data .
-        mv nxextract/nxextract.exe .
-        zip -r nxengine64.zip NXEngine64.z64 nxextract.exe data
+        ls
     - name: Create new release
       uses: ncipollo/release-action@v1
       with:
